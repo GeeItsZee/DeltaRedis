@@ -26,7 +26,9 @@ import com.yahoo.tracebachi.DeltaRedis.Shared.IDeltaRedisPlugin;
 import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
 import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.DRPubSubListener;
 import com.yahoo.tracebachi.DeltaRedis.Spigot.Commands.RunCmdCommand;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -103,6 +105,12 @@ public class DeltaRedisPlugin extends JavaPlugin implements IDeltaRedisPlugin
         {
             redisListener.shutdown();
             redisListener = null;
+        }
+
+        // Remove all online players from Redis
+        for(Player player : Bukkit.getOnlinePlayers())
+        {
+            commandSender.setPlayerAsOffline(player.getName());
         }
 
         if(commandSender != null)
