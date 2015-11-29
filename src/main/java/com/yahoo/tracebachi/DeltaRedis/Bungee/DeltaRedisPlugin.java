@@ -26,12 +26,12 @@ import com.yahoo.tracebachi.DeltaRedis.Shared.DeltaRedisChannels;
 import com.yahoo.tracebachi.DeltaRedis.Shared.IDeltaRedisPlugin;
 import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
 import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.DRPubSubListener;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
-import net.md_5.bungee.event.EventHandler;
 
 import java.io.*;
 
@@ -46,6 +46,7 @@ public class DeltaRedisPlugin extends Plugin implements IDeltaRedisPlugin, Liste
     private DRCommandSender commandSender;
     private StatefulRedisPubSubConnection<String, String> pubSubConn;
     private StatefulRedisConnection<String, String> standaloneConn;
+    private DeltaRedisListener listener;
 
     @Override
     public void onEnable()
@@ -88,13 +89,25 @@ public class DeltaRedisPlugin extends Plugin implements IDeltaRedisPlugin, Liste
             playerCacheTime, this);
         commandSender.setup();
 
-        getProxy().getPluginManager().registerListener(this, this);
+        listener = new DeltaRedisListener(this, commandSender);
+        getProxy().getPluginManager().registerListener(this, listener);
     }
 
     @Override
     public void onDisable()
     {
-        getProxy().getPluginManager().unregisterListener(this);
+        if(listener != null)
+        {
+            getProxy().getPluginManager().unregisterListener(listener);
+            listener.shutdown();
+            listener = null;
+        }
+
+        // Remove all online players from Redis
+        for(ProxiedPlayer player : getProxy().getPlayers())
+        {
+            commandSender.setPlayerAsOffline(player.getName());
+        }
 
         if(commandSender != null)
         {
@@ -185,16 +198,6 @@ public class DeltaRedisPlugin extends Plugin implements IDeltaRedisPlugin, Liste
         {
             return RedisURI.create("redis://" + redisUrl + ':' + redisPort);
         }
-    }
-
-    @EventHandler
-    public void onDeltaRedisMessage(DeltaRedisMessageEvent event)
-    {
-        if(!event.getChannel().equals("RunCmd")) { return; }
-
-        String command = event.getMessage();
-        getLogger().info("[RunCmd] Sender = " + event.getSender() + ", Command = " + command);
-        getProxy().getPluginManager().dispatchCommand(getProxy().getConsole(), command);
     }
 
     /***

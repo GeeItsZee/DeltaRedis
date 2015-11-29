@@ -21,8 +21,7 @@ import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerLoginEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 
 /**
  * Created by Trace Bachi (tracebachi@yahoo.com) on 10/18/15.
@@ -45,16 +44,10 @@ public class DeltaRedisListener implements Listener
     }
 
     @EventHandler
-    public void onLogin(PlayerLoginEvent event)
+    public void onLogin(PlayerJoinEvent event)
     {
         commandSender.setPlayerAsOnline(event.getPlayer().getName(),
-            event.getRealAddress().toString());
-    }
-
-    @EventHandler
-    public void onLogout(PlayerQuitEvent event)
-    {
-        commandSender.setPlayerAsOffline(event.getPlayer().getName());
+            event.getPlayer().getAddress().toString());
     }
 
     @EventHandler
