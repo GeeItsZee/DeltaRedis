@@ -1,0 +1,27 @@
+# DeltaRedis Configuration File
+RedisServer:
+  URL: localhost
+  Port: 6379
+  HasPassword: False
+  Password: DeltaRedis_Is_Great!
+
+# Name        | Type
+# ------------------------
+# MrRoboto    | BungeeCord
+# Diamond     | Spigot
+# Gold        | Spigot
+# Iron        | Spigot
+
+# Groups servers tied to one BungeeCord server.
+# From the example, this should be set to 'MrRoboto'
+BungeeName: BungeeCord
+
+# Identifies a unique server. Different servers should NOT have the same ServerName.
+# From the example, it could be 'Diamond', 'Gold' or 'Iron'.
+ServerName: World
+
+# Time to wait before player information is updated in cache.
+PlayerCacheTime: 1000
+
+# Used for debugging DeltaRedis
+DebugMode: False
