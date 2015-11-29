@@ -60,12 +60,12 @@ public class RunCmdCommand implements CommandExecutor
         Set<String> servers = deltaRedisApi.getServers();
         String commandStr = joinArgsForCommand(args);
 
-        if(destServers.contains(DeltaRedisChannels.BUNGEECORD) || destServers.contains(DeltaRedisChannels.ALL))
+        if(destServers.contains(DeltaRedisChannels.BUNGEECORD))
         {
             commandSender.sendMessage(Prefixes.FAILURE + "DeltaRedis is designed to disable sending commands to " +
                 "BungeeCord. If you just need to sent to all Spigot servers, use \"SPIGOT\".");
         }
-        else if(destServers.contains(DeltaRedisChannels.SPIGOT))
+        else if(destServers.contains(DeltaRedisChannels.SPIGOT) || destServers.contains("ALL"))
         {
             deltaRedisApi.publish(DeltaRedisChannels.SPIGOT, "DeltaRedis-RunCmd", commandStr);
         }

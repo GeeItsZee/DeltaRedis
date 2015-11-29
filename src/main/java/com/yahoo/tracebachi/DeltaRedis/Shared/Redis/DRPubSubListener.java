@@ -42,7 +42,6 @@ public class DRPubSubListener implements RedisPubSubListener<String, String>
         this.validChannels = new HashSet<>();
 
         this.validChannels.add(bungeeName + ':' + serverName);
-        this.validChannels.add(bungeeName + ':' + DeltaRedisChannels.ALL);
         this.validChannels.add(bungeeName + ':' + DeltaRedisChannels.SPIGOT);
         this.validChannels.add(bungeeName + ':' + DeltaRedisChannels.BUNGEECORD);
     }

@@ -81,7 +81,6 @@ public class DeltaRedisPlugin extends JavaPlugin implements IDeltaRedisPlugin
         pubSubConn.addListener(pubSubListener);
         pubSubConn.sync().subscribe(
             bungeeName + ':' + serverName,
-            bungeeName + ':' + DeltaRedisChannels.ALL,
             bungeeName + ':' + DeltaRedisChannels.SPIGOT);
 
         commandSender = new DRCommandSender(standaloneConn, bungeeName, serverName, playerCacheTime, this);

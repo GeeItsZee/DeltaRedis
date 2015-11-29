@@ -21,9 +21,6 @@ package com.yahoo.tracebachi.DeltaRedis.Shared;
  */
 public interface DeltaRedisChannels
 {
-    /* Channel name for all Spigot servers and BungeeCord instance */
-    String ALL = "ALL";
-
     /* Channel name for all Spigot servers */
     String SPIGOT = "SPIGOT";
 

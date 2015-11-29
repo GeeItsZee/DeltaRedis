@@ -82,9 +82,7 @@ public class DeltaRedisPlugin extends Plugin implements IDeltaRedisPlugin, Liste
 
         pubSubListener = new DRPubSubListener(bungeeName, DeltaRedisChannels.BUNGEECORD, this);
         pubSubConn.addListener(pubSubListener);
-        pubSubConn.sync().subscribe(
-            bungeeName + ':' + DeltaRedisChannels.ALL,
-            bungeeName + ':' + DeltaRedisChannels.BUNGEECORD);
+        pubSubConn.sync().subscribe(bungeeName + ':' + DeltaRedisChannels.BUNGEECORD);
 
         commandSender = new DRCommandSender(standaloneConn, bungeeName, DeltaRedisChannels.BUNGEECORD,
             playerCacheTime, this);
