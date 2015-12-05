@@ -21,5 +21,8 @@ package com.yahoo.tracebachi.DeltaRedis.Shared.Cache;
  */
 public interface Cacheable
 {
+    /**
+     * @return Time created at in milliseconds.
+     */
     long getTimeCreatedAt();
 }

@@ -16,9 +16,8 @@
  */
 package com.yahoo.tracebachi.DeltaRedis.Spigot.Commands;
 
-import com.yahoo.tracebachi.DeltaRedis.Shared.DeltaRedisApi;
-import com.yahoo.tracebachi.DeltaRedis.Shared.DeltaRedisChannels;
-import com.yahoo.tracebachi.DeltaRedis.Spigot.Prefixes;
+import com.yahoo.tracebachi.DeltaRedis.Shared.Channels;
+import com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces.DeltaRedisApi;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -60,14 +59,14 @@ public class RunCmdCommand implements CommandExecutor
         Set<String> servers = deltaRedisApi.getServers();
         String commandStr = joinArgsForCommand(args);
 
-        if(destServers.contains(DeltaRedisChannels.BUNGEECORD))
+        if(destServers.contains(Channels.BUNGEECORD))
         {
             commandSender.sendMessage(Prefixes.FAILURE + "DeltaRedis is designed to disable sending commands to " +
-                "BungeeCord. If you just need to sent to all Spigot servers, use \"SPIGOT\".");
+                "BungeeCord. If you just need to sent to all Spigot servers, use \"ALL\".");
         }
-        else if(destServers.contains(DeltaRedisChannels.SPIGOT) || destServers.contains("ALL"))
+        else if(destServers.contains(Channels.SPIGOT) || destServers.contains("ALL"))
         {
-            deltaRedisApi.publish(DeltaRedisChannels.SPIGOT, "DeltaRedis-RunCmd", commandStr);
+            deltaRedisApi.publish(Channels.SPIGOT, "DeltaRedis-RunCmd", commandStr);
         }
         else
         {
@@ -84,7 +83,7 @@ public class RunCmdCommand implements CommandExecutor
                 }
                 else
                 {
-                    deltaRedisApi.publish(dest, "RunCmd", commandStr);
+                    deltaRedisApi.publish(dest, "DeltaRedis-RunCmd", commandStr);
                 }
             }
         }

@@ -17,13 +17,14 @@
 package com.yahoo.tracebachi.DeltaRedis.Bungee;
 
 import com.google.common.io.ByteStreams;
+import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
-import com.yahoo.tracebachi.DeltaRedis.Shared.DeltaRedisApi;
-import com.yahoo.tracebachi.DeltaRedis.Shared.DeltaRedisChannels;
-import com.yahoo.tracebachi.DeltaRedis.Shared.IDeltaRedisPlugin;
+import com.yahoo.tracebachi.DeltaRedis.Shared.Channels;
+import com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces.DeltaRedisApi;
+import com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces.IDeltaRedisPlugin;
 import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
 import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.DRPubSubListener;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -34,6 +35,7 @@ import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
 
 import java.io.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Trace Bachi (tracebachi@yahoo.com) on 10/18/15.
@@ -41,29 +43,34 @@ import java.io.*;
 public class DeltaRedisPlugin extends Plugin implements IDeltaRedisPlugin, Listener
 {
     private boolean debugEnabled;
+    private Configuration config;
     private RedisClient client;
     private DRPubSubListener pubSubListener;
     private DRCommandSender commandSender;
     private StatefulRedisPubSubConnection<String, String> pubSubConn;
     private StatefulRedisConnection<String, String> standaloneConn;
-    private DeltaRedisListener listener;
+    private DeltaRedisListener mainListener;
+
+    @Override
+    public void onLoad()
+    {
+        try
+        {
+            config = ConfigurationProvider.getProvider(YamlConfiguration.class)
+                .load(loadResource(this, "config.yml"));
+        }
+        catch(IOException e)
+        {
+            getLogger().severe("Failed to load configuration file. " +
+                "Report this error and the following stacktrace.");
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public void onEnable()
     {
-        Configuration config;
-        try
-        {
-            config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(loadResource(this, "config.yml"));
-        }
-        catch(IOException e)
-        {
-            getLogger().severe("Failed to load configuration file. Report this error and the following stacktrace.");
-            e.printStackTrace();
-            return;
-        }
-
-        if(!validateConfig(config))
+        if(config == null || !isConfigValid(config))
         {
             getLogger().severe("Invalid configuration file!");
             getLogger().severe("Backup the configuration that currently exists.");
@@ -77,30 +84,42 @@ public class DeltaRedisPlugin extends Plugin implements IDeltaRedisPlugin, Liste
         String bungeeName = config.getString("BungeeName");
         int playerCacheTime = config.getInt("PlayerCacheTime", 1000);
 
+        ClientOptions.Builder optionBuilder = new ClientOptions.Builder();
+        optionBuilder.autoReconnect(true);
         client = RedisClient.create(getRedisUri(config));
+        client.setOptions(optionBuilder.build());
         pubSubConn = client.connectPubSub();
         standaloneConn = client.connect();
 
-        pubSubListener = new DRPubSubListener(bungeeName, DeltaRedisChannels.BUNGEECORD, this);
+        pubSubListener = new DRPubSubListener(Channels.BUNGEECORD, this);
         pubSubConn.addListener(pubSubListener);
-        pubSubConn.sync().subscribe(bungeeName + ':' + DeltaRedisChannels.BUNGEECORD);
+        pubSubConn.sync().subscribe(bungeeName + ':' + Channels.BUNGEECORD);
 
-        commandSender = new DRCommandSender(standaloneConn, bungeeName, DeltaRedisChannels.BUNGEECORD,
-            playerCacheTime, this);
+        commandSender = new DRCommandSender(standaloneConn, bungeeName,
+            Channels.BUNGEECORD, playerCacheTime, this);
         commandSender.setup();
 
-        listener = new DeltaRedisListener(this, commandSender);
-        getProxy().getPluginManager().registerListener(this, listener);
+        mainListener = new DeltaRedisListener(this, commandSender);
+        getProxy().getPluginManager().registerListener(this, mainListener);
+
+        // Schedule a task every two minutes to cleanup the cache
+        getProxy().getScheduler().schedule(this, () ->
+        {
+            if(commandSender != null)
+            {
+                commandSender.cleanupCache();
+            }
+        }, 2, 2, TimeUnit.MINUTES);
     }
 
     @Override
     public void onDisable()
     {
-        if(listener != null)
+        if(mainListener != null)
         {
-            getProxy().getPluginManager().unregisterListener(listener);
-            listener.shutdown();
-            listener = null;
+            getProxy().getPluginManager().unregisterListener(mainListener);
+            mainListener.shutdown();
+            mainListener = null;
         }
 
         // Remove all online players from Redis
@@ -145,7 +164,7 @@ public class DeltaRedisPlugin extends Plugin implements IDeltaRedisPlugin, Liste
     }
 
     @Override
-    public void callDeltaRedisMessageEvent(String source, String channel, String message)
+    public void onDeltaRedisMessageEvent(String source, String channel, String message)
     {
         DeltaRedisMessageEvent event = new DeltaRedisMessageEvent(source, channel, message);
         getProxy().getPluginManager().callEvent(event);
@@ -172,7 +191,7 @@ public class DeltaRedisPlugin extends Plugin implements IDeltaRedisPlugin, Liste
         }
     }
 
-    private boolean validateConfig(Configuration config)
+    private boolean isConfigValid(Configuration config)
     {
         return config.get("ServerName") != null &&
             config.get("BungeeName") != null &&

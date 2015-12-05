@@ -16,7 +16,7 @@
  */
 package com.yahoo.tracebachi.DeltaRedis.Bungee;
 
-import com.yahoo.tracebachi.DeltaRedis.Shared.IDeltaRedisPlugin;
+import com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces.IDeltaRedisPlugin;
 import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
 import net.md_5.bungee.BungeeCord;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
@@ -60,10 +60,10 @@ public class DeltaRedisListener implements Listener
     @EventHandler
     public void onDeltaRedisMessage(DeltaRedisMessageEvent event)
     {
-        if(!event.getChannel().equals("RunCmd")) { return; }
+        if(!event.getChannel().equals("DeltaRedis-RunCmd")) { return; }
 
         String command = event.getMessage();
-        plugin.info("[RunCmd] Sender = " + event.getSender() + ", Command = " + command);
+        plugin.info("[RunCmd] Sender: " + event.getSender() + ", Command: /" + command);
 
         BungeeCord instance = BungeeCord.getInstance();
         instance.getPluginManager().dispatchCommand(instance.getConsole(), command);

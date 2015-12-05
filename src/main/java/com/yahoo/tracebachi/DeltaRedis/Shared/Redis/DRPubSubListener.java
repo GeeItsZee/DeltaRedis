@@ -17,11 +17,8 @@
 package com.yahoo.tracebachi.DeltaRedis.Shared.Redis;
 
 import com.lambdaworks.redis.pubsub.RedisPubSubListener;
-import com.yahoo.tracebachi.DeltaRedis.Shared.DeltaRedisChannels;
-import com.yahoo.tracebachi.DeltaRedis.Shared.IDeltaRedisPlugin;
+import com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces.IDeltaRedisPlugin;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -33,54 +30,47 @@ public class DRPubSubListener implements RedisPubSubListener<String, String>
 
     private final String serverName;
     private final IDeltaRedisPlugin plugin;
-    private final Set<String> validChannels;
 
-    public DRPubSubListener(String bungeeName, String serverName, IDeltaRedisPlugin plugin)
+    public DRPubSubListener(String serverName, IDeltaRedisPlugin plugin)
     {
         this.serverName = serverName;
         this.plugin = plugin;
-        this.validChannels = new HashSet<>();
-
-        this.validChannels.add(bungeeName + ':' + serverName);
-        this.validChannels.add(bungeeName + ':' + DeltaRedisChannels.SPIGOT);
-        this.validChannels.add(bungeeName + ':' + DeltaRedisChannels.BUNGEECORD);
     }
 
     public void message(String channel, String message)
     {
-        if(validChannels.contains(channel))
+        String[] splitMessage = messageSplitPattern.split(message, 3);
+
+        if(splitMessage.length == 3)
         {
-            String[] splitMessage = messageSplitPattern.split(message, 3);
-
-            if(splitMessage.length == 3)
+            // Ignore messages sent to self
+            if(!splitMessage[0].equals(serverName))
             {
-                plugin.debug(message);
-
-                // Ignore messages sent to self
-                if(!splitMessage[0].equals(serverName))
-                {
-                    plugin.callDeltaRedisMessageEvent(splitMessage[0], splitMessage[1], splitMessage[2]);
-                }
-                else
-                {
-                    plugin.debug("Ignored message received from self.");
-                }
+                plugin.onDeltaRedisMessageEvent(splitMessage[0], splitMessage[1], splitMessage[2]);
             }
             else
             {
-                plugin.info("Received badly formatted message in DRPubSubListener.");
+                plugin.debug("Ignored message received from self.");
             }
+
+            // Log the message for debugging
+            plugin.debug("Message: " + message);
+        }
+        else
+        {
+            plugin.info("Received badly formatted message in DRPubSubListener.");
+            plugin.info("Message: " + message);
         }
     }
 
-    public void subscribed(String channel, long count)
+    public void subscribed(String channelName, long count)
     {
-        plugin.debug("Subscribed to channel: " + channel);
+        plugin.debug("Subscribed to " + channelName + " channel.");
     }
 
-    public void unsubscribed(String channel, long count)
+    public void unsubscribed(String channelName, long count)
     {
-        plugin.debug("Unsubscribed from channel: " + channel);
+        plugin.debug("No longer subscribed to " + channelName + " channel.");
     }
 
     public void message(String pattern, String channel, String message)

@@ -33,7 +33,7 @@ public class DRCache<K, V extends Cacheable>
         this.invalidValueTime = invalidValueTime;
     }
 
-    public void put(K key, V value)
+    public synchronized void put(K key, V value)
     {
         if(key != null && value != null)
         {
@@ -41,7 +41,7 @@ public class DRCache<K, V extends Cacheable>
         }
     }
 
-    public V get(K key)
+    public synchronized V get(K key)
     {
         V value = null;
         long currentTime = System.currentTimeMillis();
@@ -59,19 +59,19 @@ public class DRCache<K, V extends Cacheable>
         else return null;
     }
 
-    public V remove(K key)
+    public synchronized V remove(K key)
     {
         if(key == null) { return null; }
 
         return map.remove(key);
     }
 
-    public void removeAll()
+    public synchronized void removeAll()
     {
         map.clear();
     }
 
-    public void cleanup()
+    public synchronized void cleanup()
     {
         long currentTime = System.currentTimeMillis();
         Iterator<Map.Entry<K,V>> iter = map.entrySet().iterator();

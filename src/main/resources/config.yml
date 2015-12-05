@@ -20,7 +20,7 @@ BungeeName: BungeeCord
 # From the example, it could be 'Diamond', 'Gold' or 'Iron'.
 ServerName: World
 
-# Time to wait before player information is updated in cache.
+# Time to wait, in milliseconds, before player information is updated in cache.
 PlayerCacheTime: 1000
 
 # Used for debugging DeltaRedis

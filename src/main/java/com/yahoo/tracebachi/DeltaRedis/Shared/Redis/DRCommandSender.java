@@ -19,8 +19,9 @@ package com.yahoo.tracebachi.DeltaRedis.Shared.Redis;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.yahoo.tracebachi.DeltaRedis.Shared.Cache.CachedPlayer;
 import com.yahoo.tracebachi.DeltaRedis.Shared.Cache.DRCache;
-import com.yahoo.tracebachi.DeltaRedis.Shared.DeltaRedisApi;
-import com.yahoo.tracebachi.DeltaRedis.Shared.IDeltaRedisPlugin;
+import com.yahoo.tracebachi.DeltaRedis.Shared.Channels;
+import com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces.DeltaRedisApi;
+import com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces.IDeltaRedisPlugin;
 
 import java.util.*;
 
@@ -72,6 +73,12 @@ public class DRCommandSender implements DeltaRedisApi
 
     public void setPlayerAsOnline(String playerName, String ip)
     {
+        if(serverName.equals(Channels.BUNGEECORD))
+        {
+            throw new IllegalArgumentException("Players cannot be set as online using Bungee. " +
+                "There is no information on the player's server!");
+        }
+
         if(playerName == null || ip == null) { return; }
         playerName = playerName.toLowerCase();
 
@@ -92,6 +99,11 @@ public class DRCommandSender implements DeltaRedisApi
 
         connection.sync().del(bungeeName + ":players:" + playerName);
         plugin.debug("DRCommandSender.setPlayerAsOffline(" + playerName + ")");
+    }
+
+    public void cleanupCache()
+    {
+        playerCache.cleanup();
     }
 
     @Override

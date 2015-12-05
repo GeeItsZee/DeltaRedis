@@ -16,7 +16,7 @@
  */
 package com.yahoo.tracebachi.DeltaRedis.Spigot;
 
-import com.yahoo.tracebachi.DeltaRedis.Shared.IDeltaRedisPlugin;
+import com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces.IDeltaRedisPlugin;
 import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
@@ -56,7 +56,8 @@ public class DeltaRedisListener implements Listener
         if(!event.getChannel().equals("DeltaRedis-RunCmd")) { return; }
 
         String command = event.getMessage();
-        plugin.info("[RunCmd] Sender = " + event.getSender() + ", Command = " + command);
+        plugin.info("[RunCmd] Sender: " + event.getSender() + ", Command: " + command);
+
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
     }
 }

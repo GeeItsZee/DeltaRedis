@@ -20,9 +20,9 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
-import com.yahoo.tracebachi.DeltaRedis.Shared.DeltaRedisApi;
-import com.yahoo.tracebachi.DeltaRedis.Shared.DeltaRedisChannels;
-import com.yahoo.tracebachi.DeltaRedis.Shared.IDeltaRedisPlugin;
+import com.yahoo.tracebachi.DeltaRedis.Shared.Channels;
+import com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces.DeltaRedisApi;
+import com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces.IDeltaRedisPlugin;
 import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
 import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.DRPubSubListener;
 import com.yahoo.tracebachi.DeltaRedis.Spigot.Commands.RunCmdCommand;
@@ -39,7 +39,7 @@ import java.io.File;
 public class DeltaRedisPlugin extends JavaPlugin implements IDeltaRedisPlugin
 {
     private boolean debugEnabled;
-    private DeltaRedisListener redisListener;
+    private DeltaRedisListener mainListener;
     private RunCmdCommand runCmdCommand;
 
     private RedisClient client;
@@ -61,7 +61,7 @@ public class DeltaRedisPlugin extends JavaPlugin implements IDeltaRedisPlugin
         reloadConfig();
         debugEnabled = getConfig().getBoolean("DebugMode", false);
 
-        if(!validateConfig())
+        if(!isConfigValid())
         {
             getLogger().severe("Invalid configuration file!");
             getLogger().severe("Backup the configuration that currently exists.");
@@ -79,20 +79,30 @@ public class DeltaRedisPlugin extends JavaPlugin implements IDeltaRedisPlugin
         pubSubConn = client.connectPubSub();
         standaloneConn = client.connect();
 
-        pubSubListener = new DRPubSubListener(bungeeName, serverName, this);
+        pubSubListener = new DRPubSubListener(serverName, this);
         pubSubConn.addListener(pubSubListener);
         pubSubConn.sync().subscribe(
             bungeeName + ':' + serverName,
-            bungeeName + ':' + DeltaRedisChannels.SPIGOT);
+            bungeeName + ':' + Channels.SPIGOT);
 
-        commandSender = new DRCommandSender(standaloneConn, bungeeName, serverName, playerCacheTime, this);
+        commandSender = new DRCommandSender(standaloneConn, bungeeName,
+            serverName, playerCacheTime, this);
         commandSender.setup();
 
-        redisListener = new DeltaRedisListener(commandSender, this);
-        getServer().getPluginManager().registerEvents(redisListener, this);
+        mainListener = new DeltaRedisListener(commandSender, this);
+        getServer().getPluginManager().registerEvents(mainListener, this);
 
         runCmdCommand = new RunCmdCommand(commandSender);
         getCommand("runcmd").setExecutor(runCmdCommand);
+
+        // Schedule a task every two minutes to cleanup the cache
+        getServer().getScheduler().runTaskTimer(this, () ->
+        {
+            if(commandSender != null)
+            {
+                commandSender.cleanupCache();
+            }
+        }, 2400, 2400);
     }
 
     @Override
@@ -101,10 +111,10 @@ public class DeltaRedisPlugin extends JavaPlugin implements IDeltaRedisPlugin
         getCommand("runcmd").setExecutor(null);
         runCmdCommand = null;
 
-        if(redisListener != null)
+        if(mainListener != null)
         {
-            redisListener.shutdown();
-            redisListener = null;
+            mainListener.shutdown();
+            mainListener = null;
         }
 
         // Remove all online players from Redis
@@ -149,7 +159,7 @@ public class DeltaRedisPlugin extends JavaPlugin implements IDeltaRedisPlugin
     }
 
     @Override
-    public void callDeltaRedisMessageEvent(String source, String channel, String message)
+    public void onDeltaRedisMessageEvent(String source, String channel, String message)
     {
         DeltaRedisMessageEvent event = new DeltaRedisMessageEvent(source, channel, message);
         getServer().getPluginManager().callEvent(event);
@@ -176,7 +186,7 @@ public class DeltaRedisPlugin extends JavaPlugin implements IDeltaRedisPlugin
         }
     }
 
-    private boolean validateConfig()
+    private boolean isConfigValid()
     {
         FileConfiguration config = getConfig();
 
