@@ -29,12 +29,17 @@ public class DRPubSubListener implements RedisPubSubListener<String, String>
     private static Pattern messageSplitPattern = Pattern.compile("/\\\\");
 
     private final String serverName;
-    private final IDeltaRedisPlugin plugin;
+    private IDeltaRedisPlugin plugin;
 
     public DRPubSubListener(String serverName, IDeltaRedisPlugin plugin)
     {
         this.serverName = serverName;
         this.plugin = plugin;
+    }
+
+    public void shutdown()
+    {
+        this.plugin = null;
     }
 
     public void message(String channel, String message)
@@ -46,7 +51,7 @@ public class DRPubSubListener implements RedisPubSubListener<String, String>
             // Ignore messages sent to self
             if(!splitMessage[0].equals(serverName))
             {
-                plugin.onDeltaRedisMessageEvent(splitMessage[0], splitMessage[1], splitMessage[2]);
+                plugin.onRedisMessageEvent(splitMessage[0], splitMessage[1], splitMessage[2]);
             }
             else
             {

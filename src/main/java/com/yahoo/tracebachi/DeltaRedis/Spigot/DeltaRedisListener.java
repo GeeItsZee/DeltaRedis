@@ -16,44 +16,33 @@
  */
 package com.yahoo.tracebachi.DeltaRedis.Spigot;
 
-import com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces.IDeltaRedisPlugin;
-import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
+import com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces.LoggablePlugin;
+import com.yahoo.tracebachi.DeltaRedis.Spigot.Commands.RunCmdCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
 
 /**
  * Created by Trace Bachi (tracebachi@yahoo.com) on 10/18/15.
  */
 public class DeltaRedisListener implements Listener
 {
-    private IDeltaRedisPlugin plugin;
-    private DRCommandSender commandSender;
+    private LoggablePlugin plugin;
 
-    public DeltaRedisListener(DRCommandSender commandSender, IDeltaRedisPlugin plugin)
+    public DeltaRedisListener(LoggablePlugin plugin)
     {
         this.plugin = plugin;
-        this.commandSender = commandSender;
     }
 
     public void shutdown()
     {
-        this.commandSender = null;
         this.plugin = null;
-    }
-
-    @EventHandler
-    public void onLogin(PlayerJoinEvent event)
-    {
-        commandSender.setPlayerAsOnline(event.getPlayer().getName(),
-            event.getPlayer().getAddress().toString());
     }
 
     @EventHandler
     public void onDeltaRedisMessage(DeltaRedisMessageEvent event)
     {
-        if(!event.getChannel().equals("DeltaRedis-RunCmd")) { return; }
+        if(!event.getChannel().equals(RunCmdCommand.RUN_CMD_CHANNEL)) { return; }
 
         String command = event.getMessage();
         plugin.info("[RunCmd] Sender: " + event.getSender() + ", Command: " + command);

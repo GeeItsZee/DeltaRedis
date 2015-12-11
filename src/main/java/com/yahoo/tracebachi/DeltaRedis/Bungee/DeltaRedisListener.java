@@ -16,31 +16,57 @@
  */
 package com.yahoo.tracebachi.DeltaRedis.Bungee;
 
-import com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces.IDeltaRedisPlugin;
-import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
+import com.google.common.base.Preconditions;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces.LoggablePlugin;
 import net.md_5.bungee.BungeeCord;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
+import net.md_5.bungee.api.event.ServerConnectedEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
+
+import java.util.HashMap;
 
 /**
  * Created by Trace Bachi (tracebachi@yahoo.com, BigBossZee) on 11/29/15.
  */
 public class DeltaRedisListener implements Listener
 {
-    private IDeltaRedisPlugin plugin;
-    private DRCommandSender commandSender;
+    private final String bungeeName;
+    private StatefulRedisConnection<String, String> connection;
+    private LoggablePlugin plugin;
 
-    public DeltaRedisListener(IDeltaRedisPlugin plugin, DRCommandSender commandSender)
+    public DeltaRedisListener(String bungeeName, StatefulRedisConnection<String, String> connection,
+        LoggablePlugin plugin)
     {
+        this.bungeeName = bungeeName;
+        this.connection = connection;
         this.plugin = plugin;
-        this.commandSender = commandSender;
     }
 
     public void shutdown()
     {
         plugin = null;
-        commandSender = null;
+        connection = null;
+    }
+
+    /**
+     * Not to be confused with ServerConnectEvent, this event is called once
+     * a connection to a server is fully operational, and is about to hand over
+     * control of the session to the player. It is useful if you wish to send
+     * information to the server before the player logs in.
+     *
+     * (Doc Source: https://github.com/SpigotMC/BungeeCord/blob/master/api/src/
+     * main/java/net/md_5/bungee/api/event/ServerConnectedEvent.java
+     */
+    @EventHandler
+    public void onServerConnectedEvent(ServerConnectedEvent event)
+    {
+        String playerName = event.getPlayer().getName();
+        String serverName = event.getServer().getInfo().getName();
+        String ip = event.getPlayer().getAddress().toString();
+
+        setPlayerAsOnline(playerName, serverName, ip);
     }
 
     /**
@@ -54,7 +80,7 @@ public class DeltaRedisListener implements Listener
     public void onPlayerLeaveProxy(PlayerDisconnectEvent event)
     {
         String playerName = event.getPlayer().getName();
-        commandSender.setPlayerAsOffline(playerName);
+        setPlayerAsOffline(playerName);
     }
 
     @EventHandler
@@ -67,5 +93,32 @@ public class DeltaRedisListener implements Listener
 
         BungeeCord instance = BungeeCord.getInstance();
         instance.getPluginManager().dispatchCommand(instance.getConsole(), command);
+    }
+
+    public void setPlayerAsOnline(String playerName, String serverName, String ip)
+    {
+        Preconditions.checkNotNull(playerName, "Player name cannot be null.");
+        Preconditions.checkNotNull(serverName, "Server name cannot be null.");
+        Preconditions.checkNotNull(ip, "IP cannot be null.");
+
+        playerName = playerName.toLowerCase();
+        serverName = serverName.toLowerCase();
+
+        HashMap<String, String> map = new HashMap<>();
+        map.put("server", serverName);
+        map.put("ip", ip);
+
+        connection.sync().hmset(bungeeName + ":players:" + playerName, map);
+        plugin.debug("DeltaRedisListener.setPlayerAsOnline(" + playerName + ")");
+    }
+
+    public void setPlayerAsOffline(String playerName)
+    {
+        Preconditions.checkNotNull(playerName, "Player name cannot be null.");
+
+        playerName = playerName.toLowerCase();
+
+        connection.sync().del(bungeeName + ":players:" + playerName);
+        plugin.debug("DeltaRedisListener.setPlayerAsOffline(" + playerName + ")");
     }
 }

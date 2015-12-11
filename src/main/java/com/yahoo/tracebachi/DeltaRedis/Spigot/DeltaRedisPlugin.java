@@ -20,15 +20,13 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
-import com.yahoo.tracebachi.DeltaRedis.Shared.Channels;
-import com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces.DeltaRedisApi;
 import com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces.IDeltaRedisPlugin;
+import com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces.LoggablePlugin;
+import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.Channels;
 import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
 import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.DRPubSubListener;
 import com.yahoo.tracebachi.DeltaRedis.Spigot.Commands.RunCmdCommand;
-import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -36,7 +34,7 @@ import java.io.File;
 /**
  * Created by Trace Bachi (tracebachi@yahoo.com) on 10/18/15.
  */
-public class DeltaRedisPlugin extends JavaPlugin implements IDeltaRedisPlugin
+public class DeltaRedisPlugin extends JavaPlugin implements IDeltaRedisPlugin, LoggablePlugin
 {
     private boolean debugEnabled;
     private DeltaRedisListener mainListener;
@@ -45,6 +43,7 @@ public class DeltaRedisPlugin extends JavaPlugin implements IDeltaRedisPlugin
     private RedisClient client;
     private DRPubSubListener pubSubListener;
     private DRCommandSender commandSender;
+    private DeltaRedisApi deltaRedisApi;
     private StatefulRedisPubSubConnection<String, String> pubSubConn;
     private StatefulRedisConnection<String, String> standaloneConn;
 
@@ -73,7 +72,6 @@ public class DeltaRedisPlugin extends JavaPlugin implements IDeltaRedisPlugin
 
         String serverName = getConfig().getString("ServerName");
         String bungeeName = getConfig().getString("BungeeName");
-        int playerCacheTime = getConfig().getInt("PlayerCacheTime", 1000);
 
         client = RedisClient.create(getRedisUri());
         pubSubConn = client.connectPubSub();
@@ -85,29 +83,27 @@ public class DeltaRedisPlugin extends JavaPlugin implements IDeltaRedisPlugin
             bungeeName + ':' + serverName,
             bungeeName + ':' + Channels.SPIGOT);
 
-        commandSender = new DRCommandSender(standaloneConn, bungeeName,
-            serverName, playerCacheTime, this);
+        commandSender = new DRCommandSender(standaloneConn,
+            bungeeName, serverName, this);
         commandSender.setup();
 
-        mainListener = new DeltaRedisListener(commandSender, this);
+        deltaRedisApi = new DeltaRedisApi(commandSender, this);
+
+        mainListener = new DeltaRedisListener(this);
         getServer().getPluginManager().registerEvents(mainListener, this);
 
-        runCmdCommand = new RunCmdCommand(commandSender);
+        runCmdCommand = new RunCmdCommand(deltaRedisApi);
         getCommand("runcmd").setExecutor(runCmdCommand);
 
-        // Schedule a task every two minutes to cleanup the cache
-        getServer().getScheduler().runTaskTimer(this, () ->
-        {
-            if(commandSender != null)
-            {
-                commandSender.cleanupCache();
-            }
-        }, 2400, 2400);
+        getServer().getScheduler().runTaskTimerAsynchronously(this,
+            () -> commandSender.getServers(), 20, 20 * 15);
     }
 
     @Override
     public void onDisable()
     {
+        getServer().getScheduler().cancelTasks(this);
+
         getCommand("runcmd").setExecutor(null);
         runCmdCommand = null;
 
@@ -117,10 +113,10 @@ public class DeltaRedisPlugin extends JavaPlugin implements IDeltaRedisPlugin
             mainListener = null;
         }
 
-        // Remove all online players from Redis
-        for(Player player : Bukkit.getOnlinePlayers())
+        if(deltaRedisApi != null)
         {
-            commandSender.setPlayerAsOffline(player.getName());
+            deltaRedisApi.shutdown();
+            deltaRedisApi = null;
         }
 
         if(commandSender != null)
@@ -143,6 +139,12 @@ public class DeltaRedisPlugin extends JavaPlugin implements IDeltaRedisPlugin
             pubSubListener = null;
         }
 
+        if(pubSubListener != null)
+        {
+            pubSubListener.shutdown();
+            pubSubListener = null;
+        }
+
         if(client != null)
         {
             client.shutdown();
@@ -152,17 +154,20 @@ public class DeltaRedisPlugin extends JavaPlugin implements IDeltaRedisPlugin
         debugEnabled = false;
     }
 
-    @Override
     public DeltaRedisApi getDeltaRedisApi()
     {
-        return commandSender;
+        return deltaRedisApi;
     }
 
     @Override
-    public void onDeltaRedisMessageEvent(String source, String channel, String message)
+    public void onRedisMessageEvent(String source, String channel, String message)
     {
         DeltaRedisMessageEvent event = new DeltaRedisMessageEvent(source, channel, message);
-        getServer().getPluginManager().callEvent(event);
+
+        // Call the event synchronously
+        getServer().getScheduler().runTask(this, () ->
+            getServer().getPluginManager().callEvent(event));
+
     }
 
     @Override
@@ -192,7 +197,6 @@ public class DeltaRedisPlugin extends JavaPlugin implements IDeltaRedisPlugin
 
         return config.get("ServerName") != null &&
             config.get("BungeeName") != null &&
-            config.get("PlayerCacheTime") != null &&
             config.get("RedisServer.URL") != null &&
             config.get("RedisServer.Port") != null &&
             config.get("RedisServer.Password") != null &&

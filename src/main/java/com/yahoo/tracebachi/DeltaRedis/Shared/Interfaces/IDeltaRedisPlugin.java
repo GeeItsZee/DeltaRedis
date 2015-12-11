@@ -22,18 +22,13 @@ package com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces;
 public interface IDeltaRedisPlugin
 {
     /**
-     * @return Reference to an instance of {@link DeltaRedisApi}
-     */
-    DeltaRedisApi getDeltaRedisApi();
-
-    /**
      * Handles a DeltaRedis message to the server.
      *
      * @param source Server that sent the message.
      * @param channel Custom channel that the message should be delivered to.
      * @param message Message to deliver.
      */
-    void onDeltaRedisMessageEvent(String source, String channel, String message);
+    void onRedisMessageEvent(String source, String channel, String message);
 
     /**
      * Logs the message as INFO.

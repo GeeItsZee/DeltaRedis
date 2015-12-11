@@ -16,8 +16,8 @@
  */
 package com.yahoo.tracebachi.DeltaRedis.Spigot.Commands;
 
-import com.yahoo.tracebachi.DeltaRedis.Shared.Channels;
-import com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces.DeltaRedisApi;
+import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.Channels;
+import com.yahoo.tracebachi.DeltaRedis.Spigot.DeltaRedisApi;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -33,57 +33,62 @@ import java.util.Set;
  */
 public class RunCmdCommand implements CommandExecutor
 {
-    private DeltaRedisApi deltaRedisApi;
+    public static final String RUN_CMD_CHANNEL = "DR-RunCmd";
 
-    public RunCmdCommand(DeltaRedisApi deltaRedisApi)
+    private DeltaRedisApi deltaApi;
+
+    public RunCmdCommand(DeltaRedisApi deltaApi)
     {
-        this.deltaRedisApi = deltaRedisApi;
+        this.deltaApi = deltaApi;
     }
 
     @Override
-    public boolean onCommand(CommandSender commandSender, Command command, String s, String[] args)
+    public boolean onCommand(CommandSender sender, Command command, String s, String[] args)
     {
-        if(!commandSender.hasPermission("DeltaRedis.runcmd"))
+        if(!sender.hasPermission("DeltaRedis.RunCmd"))
         {
-            commandSender.sendMessage(Prefixes.FAILURE + "You do not have permission to run this command.");
+            sender.sendMessage(Prefixes.FAILURE + "You do not have permission to run this command.");
             return true;
         }
 
         if(args.length <= 1)
         {
-            commandSender.sendMessage(Prefixes.INFO + "/runcmd server[,server,...] command");
+            sender.sendMessage(Prefixes.INFO + "/runcmd server[,server,...] command");
+            sender.sendMessage(Prefixes.INFO + "/runcmd ALL command");
             return true;
         }
 
         Set<String> destServers = new HashSet<>(Arrays.asList(args[0].split(",")));
-        Set<String> servers = deltaRedisApi.getServers();
+        Set<String> servers = deltaApi.getCachedServers();
         String commandStr = joinArgsForCommand(args);
 
         if(destServers.contains(Channels.BUNGEECORD))
         {
-            commandSender.sendMessage(Prefixes.FAILURE + "DeltaRedis is designed to disable sending commands to " +
-                "BungeeCord. If you just need to sent to all Spigot servers, use \"ALL\".");
+            sender.sendMessage(Prefixes.FAILURE + "DeltaRedis does not allow sending" +
+                " commands to BungeeCord. Use \"ALL\" if you want to sent a command" +
+                " to all Spigot servers.");
         }
         else if(destServers.contains(Channels.SPIGOT) || destServers.contains("ALL"))
         {
-            deltaRedisApi.publish(Channels.SPIGOT, "DeltaRedis-RunCmd", commandStr);
+            Bukkit.dispatchCommand(sender, commandStr);
+            deltaApi.publish(Channels.SPIGOT, RUN_CMD_CHANNEL, commandStr);
         }
         else
         {
             for(String dest : destServers)
             {
-                if(destServers.contains(deltaRedisApi.getServerName()))
+                if(dest.equals(deltaApi.getServerName()))
                 {
-                    Bukkit.dispatchCommand(commandSender, commandStr);
+                    Bukkit.dispatchCommand(sender, commandStr);
                 }
                 else if(!servers.contains(dest))
                 {
-                    commandSender.sendMessage(Prefixes.FAILURE + ChatColor.WHITE + dest + ChatColor.GRAY +
+                    sender.sendMessage(Prefixes.FAILURE + ChatColor.WHITE + dest + ChatColor.GRAY +
                         " is offline or non-existent.");
                 }
                 else
                 {
-                    deltaRedisApi.publish(dest, "DeltaRedis-RunCmd", commandStr);
+                    deltaApi.publish(dest, RUN_CMD_CHANNEL, commandStr);
                 }
             }
         }

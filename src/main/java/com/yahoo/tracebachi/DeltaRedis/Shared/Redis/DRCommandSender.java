@@ -16,172 +16,154 @@
  */
 package com.yahoo.tracebachi.DeltaRedis.Shared.Redis;
 
+import com.google.common.base.Preconditions;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.yahoo.tracebachi.DeltaRedis.Shared.Cache.CachedPlayer;
-import com.yahoo.tracebachi.DeltaRedis.Shared.Cache.DRCache;
-import com.yahoo.tracebachi.DeltaRedis.Shared.Channels;
-import com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces.DeltaRedisApi;
-import com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces.IDeltaRedisPlugin;
+import com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces.LoggablePlugin;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by Trace Bachi (tracebachi@yahoo.com) on 10/18/15.
  */
-public class DRCommandSender implements DeltaRedisApi
+public class DRCommandSender
 {
     private final String serverName;
     private final String bungeeName;
 
     private StatefulRedisConnection<String, String> connection;
-    private IDeltaRedisPlugin plugin;
-    private DRCache<String, CachedPlayer> playerCache;
+    private LoggablePlugin plugin;
+    private Set<String> cachedServers;
 
-    private long timeLastServerCheck = 0;
-    private HashSet<String> serverSet = new HashSet<>();
-
-    public DRCommandSender(StatefulRedisConnection<String, String> connection, String bungeeName,
-        String serverName, long playerCacheTime, IDeltaRedisPlugin plugin)
+    public DRCommandSender(StatefulRedisConnection<String, String> connection,
+        String bungeeName, String serverName, LoggablePlugin plugin)
     {
         this.connection = connection;
         this.bungeeName = bungeeName;
         this.serverName = serverName;
-        this.playerCache = new DRCache<>(playerCacheTime);
         this.plugin = plugin;
     }
 
-    public void setup()
+    /**
+     * Adds server to Redis, making it visible to other servers/
+     */
+    public synchronized void setup()
     {
-        long result = connection.sync().sadd(bungeeName + ":servers", serverName);
-        plugin.debug("DRCommandSender.setup() : result = " + result);
+        connection.sync().sadd(bungeeName + ":servers", serverName);
+        plugin.debug("DRPublisher.setup()");
     }
 
-    public void shutdown()
+    /**
+     * Removes server from Redis and nullifies all internet resources.
+     */
+    public synchronized void shutdown()
     {
-        serverSet.clear();
-        serverSet = null;
-
-        playerCache.removeAll();
-        playerCache = null;
-
         connection.sync().srem(bungeeName + ":servers", serverName);
         connection.close();
         connection = null;
 
-        plugin.debug("DRCommandSender.shutdown()");
+        plugin.debug("DRPublisher.shutdown()");
+        plugin = null;
     }
 
-    public void setPlayerAsOnline(String playerName, String ip)
-    {
-        if(serverName.equals(Channels.BUNGEECORD))
-        {
-            throw new IllegalArgumentException("Players cannot be set as online using Bungee. " +
-                "There is no information on the player's server!");
-        }
-
-        if(playerName == null || ip == null) { return; }
-        playerName = playerName.toLowerCase();
-
-        HashMap<String, String> map = new HashMap<>();
-        map.put("server", serverName);
-        map.put("ip", ip);
-
-        connection.sync().hmset(bungeeName + ":players:" + playerName, map);
-        plugin.debug("DRCommandSender.setPlayerAsOnline(" + playerName + ")");
-    }
-
-    public void setPlayerAsOffline(String playerName)
-    {
-        if(playerName == null) { return; }
-        playerName = playerName.toLowerCase();
-
-        playerCache.remove(playerName);
-
-        connection.sync().del(bungeeName + ":players:" + playerName);
-        plugin.debug("DRCommandSender.setPlayerAsOffline(" + playerName + ")");
-    }
-
-    public void cleanupCache()
-    {
-        playerCache.cleanup();
-    }
-
-    @Override
+    /**
+     * @return Name of the BungeeCord instance to which the server belongs.
+     * This value is set in the configuration file for each server.
+     */
     public String getBungeeName()
     {
         return bungeeName;
     }
 
-    @Override
+    /**
+     * @return Name of the server (String). If the server is BungeeCord, the
+     * server name will be {@link Channels#BUNGEECORD}.
+     */
     public String getServerName()
     {
         return serverName;
     }
 
-    @Override
-    public long publish(String dest, String channel, String message)
+    /**
+     * @return An unmodifiable set of servers that are part of the
+     * same BungeeCord. This method will retrieve the servers from Redis.
+     */
+    public synchronized Set<String> getServers()
     {
-        if(dest.equals(serverName))
-        {
-            throw new IllegalArgumentException("Target channel cannot be " +
-                "the same as the server's own channel.");
-        }
+        Set<String> result = connection.sync().smembers(bungeeName + ":servers");
+        plugin.debug("DRCommandSender.getServers() : Updated server cache.");
 
+        cachedServers = Collections.unmodifiableSet(new HashSet<>(result));
+        return cachedServers;
+    }
+
+    /**
+     * @return An unmodifiable set of servers that are part of the
+     * same BungeeCord. This method will retrieve the servers from the last
+     * call to {@link DRCommandSender#getServers()}.
+     */
+    public Set<String> getCachedServers()
+    {
+        return cachedServers;
+    }
+
+    /**
+     * Publishes a string message using Redis PubSub. The destination can
+     * also be one of the special values {@link Channels#BUNGEECORD}
+     * or {@link Channels#SPIGOT}.
+     *
+     * @param dest Server name that message should go to.
+     * @param channel Custom channel name for the message.
+     * @param message Message to send.
+     *
+     * @return The number of servers that received the message.
+     */
+    public synchronized long publish(String dest, String channel, String message)
+    {
         plugin.debug("DRCommandSender.publish(" +
             dest + ", " + channel + ", " + message + ")");
 
-        return connection.sync().publish(bungeeName + ':' + dest,
+        return connection.sync().publish(
+            bungeeName + ':' + dest,
             serverName + "/\\" + channel + "/\\" + message);
     }
 
-    @Override
-    public Set<String> getServers()
+    /**
+     * Returns a cached player from the local cache or Redis. This method
+     * does not check players that are online on the current server. The
+     * programmer must perform that check before calling this method.
+     *
+     * @param playerName Name of the player to find.
+     *
+     * @return CachedPlayer if found and null if not.
+     */
+    public synchronized CachedPlayer getPlayer(String playerName)
     {
-        if((System.currentTimeMillis() - timeLastServerCheck) > 200)
-        {
-            serverSet.clear();
-            Set<String> result = connection.sync().smembers(bungeeName + ":servers");
-            serverSet.addAll(result);
-            timeLastServerCheck = System.currentTimeMillis();
-
-            plugin.debug("DRCommandSender.getServers() : Updated server cache.");
-        }
-
-        return Collections.unmodifiableSet(serverSet);
-    }
-
-    @Override
-    public CachedPlayer getPlayer(String playerName)
-    {
-        if(playerName == null) { return null; }
+        Preconditions.checkNotNull(playerName, "Player name cannot be null.");
         playerName = playerName.toLowerCase();
 
-        // Check the cache
-        CachedPlayer cachedPlayer = playerCache.get(playerName);
-        if(cachedPlayer != null)
-        {
-            plugin.debug("DRCommandSender.getPlayer() : Found player in cache.");
-            return cachedPlayer;
-        }
-
-        // Check Redis
         Map<String, String> result = connection.sync()
             .hgetall(bungeeName + ":players:" + playerName);
+        plugin.debug("DRCommandSender.getPlayer()");
 
-        if(result == null) { return null; }
+        if(result != null)
+        {
+            String server = result.get("server");
+            String ip = result.get("ip");
 
-        // If the map has the correct data
-        String server = result.get("server");
-        String ip = result.get("ip");
+            if(server == null || ip == null)
+            {
+                return null;
+            }
 
-        if(server == null || ip == null) { return null; }
-
-        // Add to the cache
-        cachedPlayer = new CachedPlayer(server, ip);
-        playerCache.put(playerName, cachedPlayer);
-
-        // Return
-        plugin.debug("DRCommandSender.getPlayer() : Updated/Added player in cache.");
-        return cachedPlayer;
+            return new CachedPlayer(server, ip);
+        }
+        else
+        {
+            return null;
+        }
     }
 }
