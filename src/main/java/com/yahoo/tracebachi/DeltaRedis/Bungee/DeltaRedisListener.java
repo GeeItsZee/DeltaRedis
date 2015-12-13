@@ -86,7 +86,7 @@ public class DeltaRedisListener implements Listener
     @EventHandler
     public void onDeltaRedisMessage(DeltaRedisMessageEvent event)
     {
-        if(!event.getChannel().equals("DeltaRedis-RunCmd")) { return; }
+        if(!event.getChannel().equals("DR-RunCmd")) { return; }
 
         String command = event.getMessage();
         plugin.info("[RunCmd] Sender: " + event.getSender() + ", Command: /" + command);

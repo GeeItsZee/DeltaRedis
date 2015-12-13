@@ -17,16 +17,20 @@
 package com.yahoo.tracebachi.DeltaRedis.Spigot;
 
 import com.yahoo.tracebachi.DeltaRedis.Shared.Interfaces.LoggablePlugin;
-import com.yahoo.tracebachi.DeltaRedis.Spigot.Commands.RunCmdCommand;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+
+import java.util.regex.Pattern;
 
 /**
  * Created by Trace Bachi (tracebachi@yahoo.com) on 10/18/15.
  */
 public class DeltaRedisListener implements Listener
 {
+    private static final Pattern pattern = Pattern.compile("/\\\\");
+
     private LoggablePlugin plugin;
 
     public DeltaRedisListener(LoggablePlugin plugin)
@@ -42,11 +46,29 @@ public class DeltaRedisListener implements Listener
     @EventHandler
     public void onDeltaRedisMessage(DeltaRedisMessageEvent event)
     {
-        if(!event.getChannel().equals(RunCmdCommand.RUN_CMD_CHANNEL)) { return; }
+        if(event.getChannel().equals(DeltaRedisApi.RUN_CMD_CHANNEL))
+        {
+            String command = event.getMessage();
+            plugin.info("[RunCmd] Sender: " + event.getSender() + ", Command: " + command);
 
-        String command = event.getMessage();
-        plugin.info("[RunCmd] Sender: " + event.getSender() + ", Command: " + command);
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+        }
+        else if(event.getChannel().equals(DeltaRedisApi.SEND_MESSAGE_CHANNEL))
+        {
+            String[] receiverAndMessage = pattern.split(event.getMessage(), 2);
 
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+            if(receiverAndMessage[0].equalsIgnoreCase("console"))
+            {
+                Bukkit.getConsoleSender().sendMessage(receiverAndMessage[1]);
+            }
+            else
+            {
+                Player receiver = Bukkit.getPlayer(receiverAndMessage[0]);
+                if(receiver != null && receiver.isOnline())
+                {
+                    receiver.sendMessage(receiverAndMessage[1]);
+                }
+            }
+        }
     }
 }

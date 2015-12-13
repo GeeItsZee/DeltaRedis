@@ -1,5 +1,6 @@
 package com.yahoo.tracebachi.DeltaRedis.Spigot;
 
+import com.google.common.base.Preconditions;
 import com.yahoo.tracebachi.DeltaRedis.Shared.Cache.CachedPlayer;
 import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.Channels;
 import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
@@ -12,6 +13,9 @@ import java.util.Set;
  */
 public class DeltaRedisApi
 {
+    public static final String RUN_CMD_CHANNEL = "DR-RunCmd";
+    public static final String SEND_MESSAGE_CHANNEL = "DR-SendMess";
+
     private DRCommandSender deltaSender;
     private DeltaRedisPlugin plugin;
 
@@ -64,6 +68,9 @@ public class DeltaRedisApi
      */
     public void findPlayer(String playerName, DeltaRedisPlayerCallback callback)
     {
+        Preconditions.checkNotNull(playerName, "Player name cannot be null.");
+        Preconditions.checkNotNull(callback, "Callback cannot be null.");
+
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             CachedPlayer cachedPlayer = deltaSender.getPlayer(playerName);
 
@@ -82,6 +89,10 @@ public class DeltaRedisApi
      */
     public void publish(String destination, String channel, String message)
     {
+        Preconditions.checkNotNull(destination, "Destination cannot be null.");
+        Preconditions.checkNotNull(channel, "Channel cannot be null.");
+        Preconditions.checkNotNull(message, "Message cannot be null.");
+
         if(destination.equals(deltaSender.getServerName()))
         {
             throw new IllegalArgumentException("Target channel cannot be " +
@@ -90,5 +101,64 @@ public class DeltaRedisApi
 
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () ->
             deltaSender.publish(destination, channel, message));
+    }
+
+    /**
+     * Sends a command that will run as OP by the receiving server.
+     *
+     * @param destServer Destination server name, ALL, or SPIGOT.
+     * @param command Command to send.
+     */
+    public void sendCommandToServer(String destServer, String command)
+    {
+        Preconditions.checkNotNull(destServer, "Destination server cannot be null.");
+        Preconditions.checkNotNull(command, "Command cannot be null.");
+
+        if(deltaSender.getServerName().equals(destServer))
+        {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+            return;
+        }
+
+        if(destServer.equals(Channels.SPIGOT))
+        {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                deltaSender.publish(Channels.SPIGOT, RUN_CMD_CHANNEL, command);
+            });
+        }
+        else
+        {
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                deltaSender.publish(destServer, RUN_CMD_CHANNEL, command);
+            });
+        }
+    }
+
+    /**
+     * Sends a message to a player on a different server.
+     *
+     * The purpose of this method is to allow plugins to send "replies" to players.
+     * It does not send a message if the player is offline. This method should
+     * not be used to send messages to players that are online on the current server.
+     *
+     * @param playerName Name of the player to try and send a message to.
+     * @param message Message to send.
+     */
+    public void sendMessageToPlayer(String playerName, String message)
+    {
+        Preconditions.checkNotNull(playerName, "Player name cannot be null.");
+        Preconditions.checkNotNull(message, "Message cannot be null.");
+
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            CachedPlayer cachedPlayer = deltaSender.getPlayer(playerName);
+
+            if(cachedPlayer != null)
+            {
+                deltaSender.publish(cachedPlayer.getServer(), SEND_MESSAGE_CHANNEL,
+                    playerName + "/\\" + message);
+            }
+        });
     }
 }

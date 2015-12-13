@@ -18,7 +18,6 @@ package com.yahoo.tracebachi.DeltaRedis.Spigot.Commands;
 
 import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.Channels;
 import com.yahoo.tracebachi.DeltaRedis.Spigot.DeltaRedisApi;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -33,8 +32,6 @@ import java.util.Set;
  */
 public class RunCmdCommand implements CommandExecutor
 {
-    public static final String RUN_CMD_CHANNEL = "DR-RunCmd";
-
     private DeltaRedisApi deltaApi;
 
     public RunCmdCommand(DeltaRedisApi deltaApi)
@@ -55,6 +52,7 @@ public class RunCmdCommand implements CommandExecutor
         {
             sender.sendMessage(Prefixes.INFO + "/runcmd server[,server,...] command");
             sender.sendMessage(Prefixes.INFO + "/runcmd ALL command");
+            sender.sendMessage(Prefixes.INFO + "/runcmd BUNGEECORD command");
             return true;
         }
 
@@ -64,31 +62,30 @@ public class RunCmdCommand implements CommandExecutor
 
         if(destServers.contains(Channels.BUNGEECORD))
         {
-            sender.sendMessage(Prefixes.FAILURE + "DeltaRedis does not allow sending" +
-                " commands to BungeeCord. Use \"ALL\" if you want to sent a command" +
-                " to all Spigot servers.");
+            deltaApi.sendCommandToServer(Channels.BUNGEECORD, commandStr);
+            sender.sendMessage(Prefixes.INFO + "Sent command to " +
+                ChatColor.WHITE + Channels.BUNGEECORD);
         }
         else if(destServers.contains(Channels.SPIGOT) || destServers.contains("ALL"))
         {
-            Bukkit.dispatchCommand(sender, commandStr);
-            deltaApi.publish(Channels.SPIGOT, RUN_CMD_CHANNEL, commandStr);
+            deltaApi.sendCommandToServer(Channels.SPIGOT, commandStr);
+            sender.sendMessage(Prefixes.INFO + "Sent command to " +
+                ChatColor.WHITE + "ALL");
         }
         else
         {
             for(String dest : destServers)
             {
-                if(dest.equals(deltaApi.getServerName()))
+                if(!servers.contains(dest))
                 {
-                    Bukkit.dispatchCommand(sender, commandStr);
-                }
-                else if(!servers.contains(dest))
-                {
-                    sender.sendMessage(Prefixes.FAILURE + ChatColor.WHITE + dest + ChatColor.GRAY +
-                        " is offline or non-existent.");
+                    sender.sendMessage(Prefixes.FAILURE + ChatColor.WHITE + dest +
+                        ChatColor.GRAY + " is offline or non-existent.");
                 }
                 else
                 {
-                    deltaApi.publish(dest, RUN_CMD_CHANNEL, commandStr);
+                    deltaApi.sendCommandToServer(dest, commandStr);
+                    sender.sendMessage(Prefixes.INFO + "Sent command to " +
+                        ChatColor.WHITE + dest);
                 }
             }
         }
