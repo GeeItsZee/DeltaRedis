@@ -1,6 +1,7 @@
 package com.yahoo.tracebachi.DeltaRedis.Bungee;
 
 import com.google.common.base.Preconditions;
+import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.Channels;
 import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
 import net.md_5.bungee.BungeeCord;
 
@@ -9,6 +10,8 @@ import net.md_5.bungee.BungeeCord;
  */
 public class DeltaRedisApi
 {
+    public static final String SEND_MESSAGE_CHANNEL = "DR-SendMess";
+
     private DRCommandSender deltaSender;
     private DeltaRedisPlugin plugin;
 
@@ -46,6 +49,25 @@ public class DeltaRedisApi
         BungeeCord.getInstance().getScheduler().runAsync(plugin, () ->
         {
             deltaSender.publish(destination, channel, message);
+        });
+    }
+
+    /**
+     * Sends a message to a player in the specified server.
+     *
+     * @param server Name of the server to send the message to.
+     * @param playerName Name of the player to send message to.
+     * @param message Message to send.
+     */
+    public void sendMessageToPlayer(String server, String playerName, String message)
+    {
+        Preconditions.checkNotNull(playerName, "Player name cannot be null.");
+        Preconditions.checkNotNull(message, "Message cannot be null.");
+        Preconditions.checkArgument(!server.equals(Channels.BUNGEECORD), "Server cannot be BungeeCord.");
+
+        BungeeCord.getInstance().getScheduler().runAsync(plugin, () -> {
+            deltaSender.publish(server, SEND_MESSAGE_CHANNEL,
+                playerName + "/\\" + message);
         });
     }
 }
