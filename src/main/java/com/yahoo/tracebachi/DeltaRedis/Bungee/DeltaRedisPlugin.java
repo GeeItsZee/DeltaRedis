@@ -48,7 +48,9 @@ public class DeltaRedisPlugin extends Plugin implements IDeltaRedisPlugin, Logga
     private DRCommandSender commandSender;
     private StatefulRedisPubSubConnection<String, String> pubSubConn;
     private StatefulRedisConnection<String, String> commandConn;
+
     private DeltaRedisListener mainListener;
+    private DeltaRedisApi deltaRedisApi;
 
     @Override
     public void onLoad()
@@ -97,6 +99,8 @@ public class DeltaRedisPlugin extends Plugin implements IDeltaRedisPlugin, Logga
             bungeeName, Channels.BUNGEECORD, this);
         commandSender.setup();
 
+        deltaRedisApi = new DeltaRedisApi(commandSender, this);
+
         mainListener = new DeltaRedisListener(bungeeName, commandConn, this);
         getProxy().getPluginManager().registerListener(this, mainListener);
     }
@@ -114,6 +118,12 @@ public class DeltaRedisPlugin extends Plugin implements IDeltaRedisPlugin, Logga
             getProxy().getPluginManager().unregisterListener(mainListener);
             mainListener.shutdown();
             mainListener = null;
+        }
+
+        if(deltaRedisApi != null)
+        {
+            deltaRedisApi.shutdown();
+            deltaRedisApi = null;
         }
 
         if(commandSender != null)
@@ -149,6 +159,11 @@ public class DeltaRedisPlugin extends Plugin implements IDeltaRedisPlugin, Logga
         }
 
         debugEnabled = false;
+    }
+
+    public DeltaRedisApi getDeltaRedisApi()
+    {
+        return deltaRedisApi;
     }
 
     @Override
