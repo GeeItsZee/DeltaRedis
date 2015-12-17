@@ -29,7 +29,8 @@ import java.util.regex.Pattern;
  */
 public class DeltaRedisListener implements Listener
 {
-    private static final Pattern pattern = Pattern.compile("/\\\\");
+    private static final Pattern deltaPattern = Pattern.compile("/\\\\");
+    private static final Pattern linePattern = Pattern.compile("\\\\n");
 
     private LoggablePlugin plugin;
 
@@ -55,18 +56,25 @@ public class DeltaRedisListener implements Listener
         }
         else if(event.getChannel().equals(DeltaRedisApi.SEND_MESSAGE_CHANNEL))
         {
-            String[] receiverAndMessage = pattern.split(event.getMessage(), 2);
+            String[] receiverAndMessage = deltaPattern.split(event.getMessage(), 2);
+            String[] lines = linePattern.split(receiverAndMessage[1]);
 
             if(receiverAndMessage[0].equalsIgnoreCase("console"))
             {
-                Bukkit.getConsoleSender().sendMessage(receiverAndMessage[1]);
+                for(String line : lines)
+                {
+                    Bukkit.getConsoleSender().sendMessage(line);
+                }
             }
             else
             {
                 Player receiver = Bukkit.getPlayer(receiverAndMessage[0]);
                 if(receiver != null && receiver.isOnline())
                 {
-                    receiver.sendMessage(receiverAndMessage[1]);
+                    for(String line : lines)
+                    {
+                        receiver.sendMessage(line);
+                    }
                 }
             }
         }
