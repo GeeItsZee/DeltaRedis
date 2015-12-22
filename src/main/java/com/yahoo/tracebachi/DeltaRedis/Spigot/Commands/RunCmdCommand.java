@@ -18,7 +18,7 @@ package com.yahoo.tracebachi.DeltaRedis.Spigot.Commands;
 
 import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.Channels;
 import com.yahoo.tracebachi.DeltaRedis.Spigot.DeltaRedisApi;
-import org.bukkit.ChatColor;
+import com.yahoo.tracebachi.DeltaRedis.Spigot.Prefixes;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -37,6 +37,11 @@ public class RunCmdCommand implements CommandExecutor
     public RunCmdCommand(DeltaRedisApi deltaApi)
     {
         this.deltaApi = deltaApi;
+    }
+
+    public void shutdown()
+    {
+        deltaApi = null;
     }
 
     @Override
@@ -60,17 +65,15 @@ public class RunCmdCommand implements CommandExecutor
         Set<String> servers = deltaApi.getCachedServers();
         String commandStr = joinArgsForCommand(args);
 
-        if(destServers.contains(Channels.BUNGEECORD))
+        if(destServers.contains(Channels.BUNGEECORD) || destServers.contains("bungeecord"))
         {
             deltaApi.sendCommandToServer(Channels.BUNGEECORD, commandStr);
-            sender.sendMessage(Prefixes.INFO + "Sent command to " +
-                ChatColor.WHITE + Channels.BUNGEECORD);
+            sender.sendMessage(Prefixes.SUCCESS + "Sent command to " + Prefixes.input(Channels.BUNGEECORD));
         }
-        else if(destServers.contains(Channels.SPIGOT) || destServers.contains("ALL"))
+        else if(destServers.contains(Channels.SPIGOT) || destServers.contains("ALL") || destServers.contains("all"))
         {
             deltaApi.sendCommandToServer(Channels.SPIGOT, commandStr);
-            sender.sendMessage(Prefixes.INFO + "Sent command to " +
-                ChatColor.WHITE + "ALL");
+            sender.sendMessage(Prefixes.SUCCESS + "Sent command to " + Prefixes.input("ALL"));
         }
         else
         {
@@ -78,14 +81,12 @@ public class RunCmdCommand implements CommandExecutor
             {
                 if(!servers.contains(dest))
                 {
-                    sender.sendMessage(Prefixes.FAILURE + ChatColor.WHITE + dest +
-                        ChatColor.GRAY + " is offline or non-existent.");
+                    sender.sendMessage(Prefixes.FAILURE + Prefixes.input(dest) + " is offline or non-existent.");
                 }
                 else
                 {
                     deltaApi.sendCommandToServer(dest, commandStr);
-                    sender.sendMessage(Prefixes.INFO + "Sent command to " +
-                        ChatColor.WHITE + dest);
+                    sender.sendMessage(Prefixes.SUCCESS + "Sent command to " + Prefixes.input(dest));
                 }
             }
         }

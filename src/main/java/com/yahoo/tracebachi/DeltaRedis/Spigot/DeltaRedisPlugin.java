@@ -95,8 +95,11 @@ public class DeltaRedisPlugin extends JavaPlugin implements IDeltaRedisPlugin, L
         runCmdCommand = new RunCmdCommand(deltaRedisApi);
         getCommand("runcmd").setExecutor(runCmdCommand);
 
-        getServer().getScheduler().runTaskTimerAsynchronously(this,
-            () -> commandSender.getServers(), 20, 20 * 15);
+        getServer().getScheduler().runTaskTimerAsynchronously(this, () ->
+        {
+            commandSender.getServers();
+            commandSender.getPlayers();
+        }, 20, 20 * 15);
     }
 
     @Override
@@ -104,8 +107,12 @@ public class DeltaRedisPlugin extends JavaPlugin implements IDeltaRedisPlugin, L
     {
         getServer().getScheduler().cancelTasks(this);
 
-        getCommand("runcmd").setExecutor(null);
-        runCmdCommand = null;
+        if(runCmdCommand != null)
+        {
+            getCommand("runcmd").setExecutor(null);
+            runCmdCommand.shutdown();
+            runCmdCommand = null;
+        }
 
         if(mainListener != null)
         {

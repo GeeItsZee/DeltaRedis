@@ -37,6 +37,7 @@ public class DRCommandSender
     private StatefulRedisConnection<String, String> connection;
     private LoggablePlugin plugin;
     private Set<String> cachedServers;
+    private Set<String> cachedPlayers;
 
     public DRCommandSender(StatefulRedisConnection<String, String> connection,
         String bungeeName, String serverName, LoggablePlugin plugin)
@@ -94,7 +95,7 @@ public class DRCommandSender
     public synchronized Set<String> getServers()
     {
         Set<String> result = connection.sync().smembers(bungeeName + ":servers");
-        plugin.debug("DRCommandSender.getServers() : Updated server cache.");
+        plugin.debug("DRCommandSender.getServers() : Updated cache.");
 
         cachedServers = Collections.unmodifiableSet(new HashSet<>(result));
         return cachedServers;
@@ -108,6 +109,29 @@ public class DRCommandSender
     public Set<String> getCachedServers()
     {
         return cachedServers;
+    }
+
+    /**
+     * @return An unmodifiable set of players (names) that are part of the
+     * same BungeeCord. This method will retrieve the players from Redis.
+     */
+    public synchronized Set<String> getPlayers()
+    {
+        Set<String> result = connection.sync().smembers(bungeeName + ":players");
+        plugin.debug("DRCommandSender.getPlayers() : Updated cache.");
+
+        cachedPlayers = Collections.unmodifiableSet(new HashSet<>(result));
+        return cachedPlayers;
+    }
+
+    /**
+     * @return An unmodifiable set of players (names) that are part of the
+     * same BungeeCord. This method will retrieve the players from the last
+     * call to {@link DRCommandSender#getPlayers()}.
+     */
+    public Set<String> getCachedPlayers()
+    {
+        return cachedPlayers;
     }
 
     /**

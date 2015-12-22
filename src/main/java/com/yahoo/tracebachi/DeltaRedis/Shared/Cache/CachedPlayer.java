@@ -32,17 +32,30 @@ public class CachedPlayer implements Cacheable
         this.timeCreatedAt = System.currentTimeMillis();
     }
 
+    /**
+     * @return Time in milliseconds when this {@link CachedPlayer} was created.
+     */
     @Override
     public long getTimeCreatedAt()
     {
         return timeCreatedAt;
     }
 
+    /**
+     * It is possible that the player has disconnected from BungeeCord or
+     * switched servers. Developers should handle that case if they plan
+     * to send any messages to the server in regards to the player.
+     *
+     * @return The last known server the player was on is returned.
+     */
     public String getServer()
     {
         return server;
     }
 
+    /**
+     * @return IP address of the player as stored on BungeeCord.
+     */
     public String getIp()
     {
         return ip;

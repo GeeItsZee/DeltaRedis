@@ -1,3 +1,19 @@
+/*
+ * This file is part of DeltaRedis.
+ *
+ * DeltaRedis is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * DeltaRedis is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with DeltaRedis.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package com.yahoo.tracebachi.DeltaRedis.Bungee;
 
 import com.google.common.io.ByteStreams;
@@ -10,13 +26,28 @@ import java.io.*;
  */
 public interface ConfigUtil
 {
+    /**
+     * Loads the resource from the JAR and saves it to the destination under the plugin's
+     * data folder. By default, the destination file will not be replaced if it exists.
+     *
+     * @param plugin Plugin that contains the resource in it's JAR.
+     * @param resourceName Filename of the resource.
+     * @param destinationName Filename of the destination.
+     *
+     * @return Destination File.
+     */
+    static File loadResource(Plugin plugin, String resourceName, String destinationName)
+    {
+        return loadResource(plugin, resourceName, destinationName, false);
+    }
+
     /***
-     * Source for this method found at:
+     * Source for the majority of this method can be found at:
      * https://www.spigotmc.org/threads/bungeecords-configuration-api.11214/#post-119017
      * <p>
      * Originally authored by: vemacs, Feb 15, 2014
      */
-    static File loadResource(Plugin plugin, String resourceName, String destinationName)
+    static File loadResource(Plugin plugin, String resourceName, String destinationName, boolean replace)
     {
         File folder = plugin.getDataFolder();
         if(!folder.exists())
@@ -27,7 +58,7 @@ public interface ConfigUtil
         File destinationFile = new File(folder, destinationName);
         try
         {
-            if(!destinationFile.exists())
+            if(!destinationFile.exists() || replace)
             {
                 destinationFile.createNewFile();
                 try(InputStream in = plugin.getResourceAsStream(resourceName);

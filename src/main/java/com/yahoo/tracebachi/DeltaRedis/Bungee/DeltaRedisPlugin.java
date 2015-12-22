@@ -62,7 +62,7 @@ public class DeltaRedisPlugin extends Plugin implements IDeltaRedisPlugin, Logga
 
             if(config == null || !isConfigValid(config))
             {
-                ConfigUtil.loadResource(this, "config.yml", "config-example.yml");
+                ConfigUtil.loadResource(this, "config.yml", "config-example.yml", true);
                 getLogger().severe("Invalid configuration file! An example configuration" +
                     " has been saved to the .../plugins/DeltaRedis/config-example.yml");
             }

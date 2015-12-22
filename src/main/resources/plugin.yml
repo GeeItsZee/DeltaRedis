@@ -1,6 +1,6 @@
 name: DeltaRedis
 main: com.yahoo.tracebachi.DeltaRedis.Spigot.DeltaRedisPlugin
-version: 1.3
+version: 1.4
 author: Trace Bachi (tracebachi@yahoo.com, BigBossZee)
 commands:
   runcmd:

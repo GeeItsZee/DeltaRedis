@@ -36,19 +36,37 @@ public class DeltaRedisMessageEvent extends Event
         this.message = message;
     }
 
+    /**
+     * @return Name of the server that sent the message. This is not the player name.
+     */
     public String getSender()
     {
         return sender;
     }
 
+    /**
+     * @return Name of the channel that the message is targeted at.
+     */
     public String getChannel()
     {
         return channel;
     }
 
+    /**
+     * @return The message/data received.
+     */
     public String getMessage()
     {
         return message;
+    }
+
+    /**
+     * @return Comma separated string of the sender, channel, and message.
+     */
+    @Override
+    public String toString()
+    {
+        return sender + " , " + channel + " , " + message;
     }
 
     public HandlerList getHandlers()
@@ -59,11 +77,5 @@ public class DeltaRedisMessageEvent extends Event
     public static HandlerList getHandlerList()
     {
         return handlers;
-    }
-
-    @Override
-    public String toString()
-    {
-        return sender + " , " + channel + " , " + message;
     }
 }

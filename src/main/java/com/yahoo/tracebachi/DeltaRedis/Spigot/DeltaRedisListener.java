@@ -44,6 +44,13 @@ public class DeltaRedisListener implements Listener
         this.plugin = null;
     }
 
+    /**
+     * Handles events on the "DR-RunCmd" channel which allows players to execute
+     * BungeeCord commands from their servers. Handles events on the "DR-SendMess"
+     * channel which allows plugins to send messages to players from other servers.
+     *
+     * @param event The DeltaRedisMessage event to handle.
+     */
     @EventHandler
     public void onDeltaRedisMessage(DeltaRedisMessageEvent event)
     {
@@ -57,9 +64,10 @@ public class DeltaRedisListener implements Listener
         else if(event.getChannel().equals(DeltaRedisApi.SEND_MESSAGE_CHANNEL))
         {
             String[] receiverAndMessage = deltaPattern.split(event.getMessage(), 2);
+            String receiverName = receiverAndMessage[0];
             String[] lines = linePattern.split(receiverAndMessage[1]);
 
-            if(receiverAndMessage[0].equalsIgnoreCase("console"))
+            if(receiverName.equalsIgnoreCase("console"))
             {
                 for(String line : lines)
                 {
@@ -68,7 +76,7 @@ public class DeltaRedisListener implements Listener
             }
             else
             {
-                Player receiver = Bukkit.getPlayer(receiverAndMessage[0]);
+                Player receiver = Bukkit.getPlayer(receiverName);
                 if(receiver != null && receiver.isOnline())
                 {
                     for(String line : lines)

@@ -83,6 +83,12 @@ public class DeltaRedisListener implements Listener
         setPlayerAsOffline(playerName);
     }
 
+    /**
+     * Handles events on the "DR-RunCmd" channel which allows players to execute
+     * BungeeCord commands from their servers.
+     *
+     * @param event The DeltaRedisMessage event to handle.
+     */
     @EventHandler
     public void onDeltaRedisMessage(DeltaRedisMessageEvent event)
     {
@@ -95,6 +101,14 @@ public class DeltaRedisListener implements Listener
         instance.getPluginManager().dispatchCommand(instance.getConsole(), command);
     }
 
+    /**
+     * Adds the player to Redis with the key "bungeename:players:name" and into
+     * the online player set with the key "bungeename:players".
+     *
+     * @param playerName Name of the player to add.
+     * @param serverName Server of the player.
+     * @param ip IP address of the player.
+     */
     public void setPlayerAsOnline(String playerName, String serverName, String ip)
     {
         Preconditions.checkNotNull(playerName, "Player name cannot be null.");
@@ -109,15 +123,23 @@ public class DeltaRedisListener implements Listener
         map.put("ip", ip);
 
         connection.sync().hmset(bungeeName + ":players:" + playerName, map);
+        connection.sync().sadd(bungeeName + ":players", playerName);
         plugin.debug("DeltaRedisListener.setPlayerAsOnline(" + playerName + ")");
     }
 
+    /**
+     * Removes the player from Redis with the key "bungeename:players:name" and
+     * from the online player set with the key "bungeename:players".
+     *
+     * @param playerName Name of the player to remove.
+     */
     public void setPlayerAsOffline(String playerName)
     {
         Preconditions.checkNotNull(playerName, "Player name cannot be null.");
 
         playerName = playerName.toLowerCase();
 
+        connection.sync().srem(bungeeName + ":players", playerName);
         connection.sync().del(bungeeName + ":players:" + playerName);
         plugin.debug("DeltaRedisListener.setPlayerAsOffline(" + playerName + ")");
     }

@@ -42,6 +42,18 @@ public class DRPubSubListener implements RedisPubSubListener<String, String>
         this.plugin = null;
     }
 
+    /**
+     * Called when a message is received by the RedisPubSub listener.
+     * <p>
+     * The received message is structured into 3 parts: serverName,
+     * message channel, and the actual message. Those parts are used to
+     * call a DeltaRedisMessageEvent. If the message originated from
+     * the current server, it is ignored.
+     * </p>
+     *
+     * @param channel Ignored as the listener is only registered to explicit channels.
+     * @param message Receieved message.
+     */
     public void message(String channel, String message)
     {
         String[] splitMessage = messageSplitPattern.split(message, 3);
@@ -68,11 +80,19 @@ public class DRPubSubListener implements RedisPubSubListener<String, String>
         }
     }
 
+    /**
+     * @param channelName Channel that the listener was registered to.
+     * @param count Number of other listeners (on that Redis instance) on the channel.
+     */
     public void subscribed(String channelName, long count)
     {
         plugin.debug("Subscribed to " + channelName + " channel.");
     }
 
+    /**
+     * @param channelName Channel that the listener was unregistered from.
+     * @param count Number of other listeners (on that Redis instance) on the channel.
+     */
     public void unsubscribed(String channelName, long count)
     {
         plugin.debug("No longer subscribed to " + channelName + " channel.");
