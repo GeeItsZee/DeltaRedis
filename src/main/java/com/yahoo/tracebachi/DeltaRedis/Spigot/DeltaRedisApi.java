@@ -22,6 +22,8 @@ import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.Channels;
 import com.yahoo.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
 import org.bukkit.Bukkit;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -83,6 +85,27 @@ public class DeltaRedisApi
     public Set<String> getCachedPlayers()
     {
         return deltaSender.getCachedPlayers();
+    }
+
+    /**
+     * @param partial Non-null string that is the beginning of a name
+     *
+     * @return A list of player names that begins with the partial
+     * sent to this method.
+     */
+    public List<String> matchStartOfName(String partial)
+    {
+        List<String> result = new ArrayList<>();
+        partial = partial.toLowerCase();
+
+        for(String name : getCachedPlayers())
+        {
+            if(name.startsWith(partial))
+            {
+                result.add(name);
+            }
+        }
+        return result;
     }
 
     /**
