@@ -57,14 +57,14 @@ public class DeltaRedisPlugin extends Plugin implements IDeltaRedisPlugin, Liste
     @Override
     public void onLoad()
     {
-        severe("-----------------------------------------------------------------");
-        severe("[IMPORTANT] Please verify that all Spigot servers are configured with their correct cased name.");
-        severe("[IMPORTANT] \'World\' is not the same as \'world\'");
+        info("-----------------------------------------------------------------");
+        info("[IMPORTANT] Please verify that all Spigot servers are configured with their correct cased name.");
+        info("[IMPORTANT] \'World\' is not the same as \'world\'");
         for(Map.Entry<String, ServerInfo> entry : getProxy().getServers().entrySet())
         {
             info("Case-sensitive server name: " + entry.getValue().getName());
         }
-        severe("-----------------------------------------------------------------");
+        info("-----------------------------------------------------------------");
     }
 
     @Override

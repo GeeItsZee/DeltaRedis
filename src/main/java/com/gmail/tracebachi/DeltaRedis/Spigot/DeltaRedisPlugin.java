@@ -53,11 +53,11 @@ public class DeltaRedisPlugin extends JavaPlugin implements IDeltaRedisPlugin
     @Override
     public void onEnable()
     {
-        severe("-----------------------------------------------------------------");
-        severe("[IMPORTANT] Please make sure that \'ServerName\' is *exactly* the same as your BungeeCord config for this server.");
-        severe("[IMPORTANT] DeltaRedis and all plugins that depend on it will not run correctly if the name is not correct.");
-        severe("[IMPORTANT] \'World\' is not the same as \'world\'");
-        severe("-----------------------------------------------------------------");
+        info("-----------------------------------------------------------------");
+        info("[IMPORTANT] Please make sure that \'ServerName\' is *exactly* the same as your BungeeCord config for this server.");
+        info("[IMPORTANT] DeltaRedis and all plugins that depend on it will not run correctly if the name is not correct.");
+        info("[IMPORTANT] \'World\' is not the same as \'world\'");
+        info("-----------------------------------------------------------------");
 
         reloadConfig();
         debugEnabled = getConfig().getBoolean("DebugMode", false);
