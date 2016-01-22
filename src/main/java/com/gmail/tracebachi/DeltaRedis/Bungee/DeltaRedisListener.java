@@ -18,9 +18,11 @@ package com.gmail.tracebachi.DeltaRedis.Bungee;
 
 import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisChannels;
 import com.gmail.tracebachi.DeltaRedis.Shared.Interfaces.IDeltaRedisPlugin;
+import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import com.google.common.base.Preconditions;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import net.md_5.bungee.BungeeCord;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.ServerConnectedEvent;
 import net.md_5.bungee.api.plugin.Listener;
@@ -31,7 +33,7 @@ import java.util.HashMap;
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 11/29/15.
  */
-public class DeltaRedisListener implements Listener
+public class DeltaRedisListener implements Listener, Shutdownable
 {
     private final String bungeeName;
     private StatefulRedisConnection<String, String> connection;
@@ -45,8 +47,14 @@ public class DeltaRedisListener implements Listener
         this.bungeeName = plugin.getBungeeName();
     }
 
+    @Override
     public void shutdown()
     {
+        for(ProxiedPlayer player : BungeeCord.getInstance().getPlayers())
+        {
+            setPlayerAsOffline(player.getName());
+        }
+
         plugin = null;
         connection = null;
     }

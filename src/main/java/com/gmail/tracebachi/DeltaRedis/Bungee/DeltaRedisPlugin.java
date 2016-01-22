@@ -102,11 +102,6 @@ public class DeltaRedisPlugin extends Plugin implements IDeltaRedisPlugin, Liste
     {
         if(mainListener != null)
         {
-            for(ProxiedPlayer player : getProxy().getPlayers())
-            {
-                mainListener.setPlayerAsOffline(player.getName());
-            }
-
             getProxy().getPluginManager().unregisterListener(mainListener);
             mainListener.shutdown();
             mainListener = null;

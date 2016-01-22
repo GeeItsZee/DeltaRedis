@@ -18,6 +18,7 @@ package com.gmail.tracebachi.DeltaRedis.Shared.Redis;
 
 import com.gmail.tracebachi.DeltaRedis.Shared.Cache.CachedPlayer;
 import com.gmail.tracebachi.DeltaRedis.Shared.Interfaces.IDeltaRedisPlugin;
+import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import com.google.common.base.Preconditions;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 
@@ -28,7 +29,7 @@ import java.util.Set;
 /**
  * Created by Trace Bachi (tracebachi@gmail.com) on 10/18/15.
  */
-public class DRCommandSender
+public class DRCommandSender implements Shutdownable
 {
     private final String serverName;
     private final String bungeeName;
@@ -56,9 +57,7 @@ public class DRCommandSender
         plugin.debug("DRPublisher.setup()");
     }
 
-    /**
-     * Removes server from Redis and nullifies all internet resources.
-     */
+    @Override
     public synchronized void shutdown()
     {
         connection.sync().srem(bungeeName + ":servers", serverName);

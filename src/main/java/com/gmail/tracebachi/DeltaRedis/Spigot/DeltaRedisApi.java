@@ -20,6 +20,7 @@ import com.gmail.tracebachi.DeltaRedis.Shared.Cache.CachedPlayer;
 import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisChannels;
 import com.gmail.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
 import com.gmail.tracebachi.DeltaRedis.Shared.Redis.Servers;
+import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import com.google.common.base.Preconditions;
 import org.bukkit.Bukkit;
 
@@ -30,7 +31,7 @@ import java.util.Set;
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 12/11/15.
  */
-public class DeltaRedisApi
+public class DeltaRedisApi implements Shutdownable
 {
     private DRCommandSender deltaSender;
     private DeltaRedisPlugin plugin;
@@ -41,6 +42,7 @@ public class DeltaRedisApi
         this.plugin = plugin;
     }
 
+    @Override
     public void shutdown()
     {
         this.deltaSender = null;
@@ -143,7 +145,7 @@ public class DeltaRedisApi
      * @param playerName Name of the player to find.
      * @param callback Callback to run when fetch is complete.
      */
-    public void findPlayer(String playerName, DeltaRedisPlayerCallback callback)
+    public void findPlayer(String playerName, CachedPlayerCallback callback)
     {
         Preconditions.checkNotNull(playerName, "Player name cannot be null.");
         Preconditions.checkNotNull(callback, "Callback cannot be null.");

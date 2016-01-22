@@ -17,6 +17,7 @@
 package com.gmail.tracebachi.DeltaRedis.Spigot.Commands;
 
 import com.gmail.tracebachi.DeltaRedis.Shared.Redis.Servers;
+import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedisApi;
 import com.gmail.tracebachi.DeltaRedis.Spigot.Prefixes;
 import org.bukkit.command.Command;
@@ -30,7 +31,7 @@ import java.util.Set;
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 11/28/15.
  */
-public class RunCmdCommand implements CommandExecutor
+public class RunCmdCommand implements CommandExecutor, Shutdownable
 {
     private DeltaRedisApi deltaApi;
 
@@ -39,6 +40,7 @@ public class RunCmdCommand implements CommandExecutor
         this.deltaApi = deltaApi;
     }
 
+    @Override
     public void shutdown()
     {
         deltaApi = null;

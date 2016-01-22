@@ -18,6 +18,7 @@ package com.gmail.tracebachi.DeltaRedis.Spigot;
 
 import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisChannels;
 import com.gmail.tracebachi.DeltaRedis.Shared.Interfaces.LoggablePlugin;
+import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -28,7 +29,7 @@ import java.util.regex.Pattern;
 /**
  * Created by Trace Bachi (tracebachi@gmail.com) on 10/18/15.
  */
-public class DeltaRedisListener implements Listener
+public class DeltaRedisListener implements Listener, Shutdownable
 {
     private static final Pattern DELTA_PATTERN = Pattern.compile("/\\\\");
     private static final Pattern NEWLINE_PATTERN = Pattern.compile("\\\\n");
@@ -40,6 +41,7 @@ public class DeltaRedisListener implements Listener
         this.plugin = plugin;
     }
 
+    @Override
     public void shutdown()
     {
         this.plugin = null;

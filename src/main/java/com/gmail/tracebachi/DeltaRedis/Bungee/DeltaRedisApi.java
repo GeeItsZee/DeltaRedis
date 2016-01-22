@@ -19,13 +19,14 @@ package com.gmail.tracebachi.DeltaRedis.Bungee;
 import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisChannels;
 import com.gmail.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
 import com.gmail.tracebachi.DeltaRedis.Shared.Redis.Servers;
+import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import com.google.common.base.Preconditions;
 import net.md_5.bungee.BungeeCord;
 
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 12/11/15.
  */
-public class DeltaRedisApi
+public class DeltaRedisApi implements Shutdownable
 {
     private DRCommandSender deltaSender;
     private DeltaRedisPlugin plugin;
@@ -36,6 +37,7 @@ public class DeltaRedisApi
         this.plugin = plugin;
     }
 
+    @Override
     public void shutdown()
     {
         this.deltaSender = null;
