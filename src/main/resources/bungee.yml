@@ -1,4 +1,4 @@
 name: DeltaRedis
-main: com.yahoo.tracebachi.DeltaRedis.Bungee.DeltaRedisPlugin
-version: 1.4
-author: Trace Bachi (tracebachi@yahoo.com, BigBossZee)
+main: com.gmail.tracebachi.DeltaRedis.DeltaRedisPlugin
+version: 1.5
+author: Trace Bachi (tracebachi@gmail.com, BigBossZee)

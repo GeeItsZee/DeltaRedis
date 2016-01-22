@@ -1,14 +1,14 @@
 # DeltaRedis
-DeltaRedis uses the in-memory data structure store, [Redis](http://redis.io/), to help BungeeCord communicate with the servers 
-it handles. 
+DeltaRedis uses the in-memory data structure store, [Redis](http://redis.io/), to create a new communication
+system for BungeeCord-linked Spigot servers.
 
 BungeeCord uses player connections and special Bukkit/Spigot channels to communicate which makes it heavily dependent on
-players. By using DeltaRedis, BungeeCord and servers can communicate (often faster and easier) than the provided BungeeCord methods.
+players. By using DeltaRedis, BungeeCord and servers can communicate, faster and easier, than the provided BungeeCord methods.
 
 # Licence ([GPLv3](http://www.gnu.org/licenses/gpl-3.0.en.html))
 ```
-DeltaRedis - BungeeCord and Bukkit/Spigot plugin for multi-server communication.
-Copyright (C) 2015  Trace Bachi (tracebachi@yahoo.com)
+DeltaRedis - BungeeCord and Spigot plugin for multi-server communication.
+Copyright (C) 2015  Trace Bachi (tracebachi@gmail.com)
 
 DeltaRedis is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

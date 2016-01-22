@@ -1,0 +1,20 @@
+# DeltaRedis Configuration File
+RedisServer:
+  URL: localhost
+  Port: 6379
+  HasPassword: False
+  Password: DeltaRedis_Is_Great!
+
+# Name        | Type
+# ------------------------
+# MrRoboto    | BungeeCord
+# Diamond     | Spigot
+# Gold        | Spigot
+# Iron        | Spigot
+
+# Name of this BungeeCord instance
+# From the example, this should be set to 'MrRoboto'.
+BungeeName: Bungee
+
+# Used for debugging DeltaRedis
+DebugMode: True

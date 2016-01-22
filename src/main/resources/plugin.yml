@@ -1,7 +1,7 @@
 name: DeltaRedis
-main: com.yahoo.tracebachi.DeltaRedis.Spigot.DeltaRedisPlugin
-version: 1.4
-author: Trace Bachi (tracebachi@yahoo.com, BigBossZee)
+main: com.gmail.tracebachi.DeltaRedis.DeltaRedisPlugin
+version: 1.5
+author: Trace Bachi (tracebachi@gmail.com, BigBossZee)
 commands:
   runcmd:
     description: Allows the user to send commands to other servers that will get run by that server's console.

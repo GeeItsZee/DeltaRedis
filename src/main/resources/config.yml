@@ -12,13 +12,17 @@ RedisServer:
 # Gold        | Spigot
 # Iron        | Spigot
 
-# Groups servers tied to one BungeeCord server.
+# Name of the BungeeCord instance to which the server belongs.
 # From the example, this should be set to 'MrRoboto'.
 BungeeName: Bungee
 
-# Name of the server as listed in BungeeCord. (Ignore for DeltaRedis on BungeeCord)
+# Exact name of the server as listed in the BungeeCord config.
+# This name is case-sensitive! Please double check to make sure it is correct.
 # From the example, it should be 'Diamond', 'Gold' or 'Iron'.
-ServerName: World
+ServerNameInBungeeCord: World
+
+# Time in ticks for every online server and online player update
+OnlineUpdatePeriod: 300
 
 # Used for debugging DeltaRedis
-DebugMode: False
+DebugMode: True
