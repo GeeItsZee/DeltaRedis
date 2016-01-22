@@ -126,9 +126,9 @@ public class DeltaRedisApi
         List<String> result = new ArrayList<>();
         partial = partial.toLowerCase();
 
-        for(String name : getCachedPlayers())
+        for(String name : getCachedServers())
         {
-            if(name.startsWith(partial))
+            if(name.toLowerCase().startsWith(partial))
             {
                 result.add(name);
             }
