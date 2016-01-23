@@ -1,4 +1,6 @@
 # DeltaRedis Configuration File
+
+# Login and connection information for the Redis server
 RedisServer:
   URL: localhost
   Port: 6379

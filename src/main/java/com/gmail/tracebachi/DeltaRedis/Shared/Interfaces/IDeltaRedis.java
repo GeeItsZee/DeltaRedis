@@ -21,7 +21,7 @@ import com.gmail.tracebachi.DeltaRedis.Shared.Redis.Servers;
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 11/27/15.
  */
-public interface IDeltaRedisPlugin extends LoggablePlugin
+public interface IDeltaRedis extends LoggablePlugin
 {
     /**
      * Handles a DeltaRedis message to the server.

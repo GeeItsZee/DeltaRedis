@@ -1,5 +1,5 @@
 name: DeltaRedis
-main: com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedisPlugin
+main: com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedis
 version: 1.5
 author: Trace Bachi (tracebachi@gmail.com, BigBossZee)
 commands:

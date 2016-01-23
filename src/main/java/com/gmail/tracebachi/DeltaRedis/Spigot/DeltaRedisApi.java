@@ -34,9 +34,9 @@ import java.util.Set;
 public class DeltaRedisApi implements Shutdownable
 {
     private DRCommandSender deltaSender;
-    private DeltaRedisPlugin plugin;
+    private DeltaRedis plugin;
 
-    public DeltaRedisApi(DRCommandSender deltaSender, DeltaRedisPlugin plugin)
+    public DeltaRedisApi(DRCommandSender deltaSender, DeltaRedis plugin)
     {
         this.deltaSender = deltaSender;
         this.plugin = plugin;

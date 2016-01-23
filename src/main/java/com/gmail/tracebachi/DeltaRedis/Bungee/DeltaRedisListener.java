@@ -17,7 +17,7 @@
 package com.gmail.tracebachi.DeltaRedis.Bungee;
 
 import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisChannels;
-import com.gmail.tracebachi.DeltaRedis.Shared.Interfaces.IDeltaRedisPlugin;
+import com.gmail.tracebachi.DeltaRedis.Shared.Interfaces.IDeltaRedis;
 import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import com.google.common.base.Preconditions;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
@@ -37,10 +37,10 @@ public class DeltaRedisListener implements Listener, Shutdownable
 {
     private final String bungeeName;
     private StatefulRedisConnection<String, String> connection;
-    private IDeltaRedisPlugin plugin;
+    private IDeltaRedis plugin;
 
     public DeltaRedisListener(StatefulRedisConnection<String, String> connection,
-        IDeltaRedisPlugin plugin)
+        IDeltaRedis plugin)
     {
         this.connection = connection;
         this.plugin = plugin;
