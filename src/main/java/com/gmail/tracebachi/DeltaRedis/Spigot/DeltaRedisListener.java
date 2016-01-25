@@ -17,26 +17,21 @@
 package com.gmail.tracebachi.DeltaRedis.Spigot;
 
 import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisChannels;
-import com.gmail.tracebachi.DeltaRedis.Shared.Interfaces.LoggablePlugin;
+import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisInterface;
 import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
-import java.util.regex.Pattern;
-
 /**
  * Created by Trace Bachi (tracebachi@gmail.com) on 10/18/15.
  */
 public class DeltaRedisListener implements Listener, Shutdownable
 {
-    private static final Pattern DELTA_PATTERN = Pattern.compile("/\\\\");
-    private static final Pattern NEWLINE_PATTERN = Pattern.compile("\\\\n");
+    private DeltaRedisInterface plugin;
 
-    private LoggablePlugin plugin;
-
-    public DeltaRedisListener(LoggablePlugin plugin)
+    public DeltaRedisListener(DeltaRedisInterface plugin)
     {
         this.plugin = plugin;
     }
@@ -62,7 +57,8 @@ public class DeltaRedisListener implements Listener, Shutdownable
         }
         else if(channel.equals(DeltaRedisChannels.SEND_ANNOUNCEMENT))
         {
-            String[] lines = NEWLINE_PATTERN.split(eventMessage);
+            String[] lines = DeltaRedisMessageEvent.DELTA_PATTERN
+                .split(eventMessage);
 
             for(Player player : Bukkit.getOnlinePlayers())
             {
@@ -74,9 +70,11 @@ public class DeltaRedisListener implements Listener, Shutdownable
         }
         else if(channel.equals(DeltaRedisChannels.SEND_MESSAGE))
         {
-            String[] receiverAndMessage = DELTA_PATTERN.split(eventMessage, 2);
+            String[] receiverAndMessage = DeltaRedisMessageEvent.DELTA_PATTERN
+                .split(eventMessage, 2);
             String receiverName = receiverAndMessage[0];
-            String[] lines = NEWLINE_PATTERN.split(receiverAndMessage[1]);
+            String[] lines = DeltaRedisMessageEvent.NEWLINE_PATTERN
+                .split(receiverAndMessage[1]);
 
             if(receiverName.equalsIgnoreCase("console"))
             {

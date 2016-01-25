@@ -19,7 +19,7 @@ package com.gmail.tracebachi.DeltaRedis.Spigot;
 import com.gmail.tracebachi.DeltaRedis.Shared.Cache.CachedPlayer;
 import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisChannels;
 import com.gmail.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
-import com.gmail.tracebachi.DeltaRedis.Shared.Redis.Servers;
+import com.gmail.tracebachi.DeltaRedis.Shared.Servers;
 import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import com.google.common.base.Preconditions;
 import org.bukkit.Bukkit;
@@ -157,6 +157,20 @@ public class DeltaRedisApi implements Shutdownable
             Bukkit.getScheduler().runTask(plugin,
                 () -> callback.call(cachedPlayer));
         });
+    }
+
+    /**
+     * Publishes a message built from string message pieces joined by
+     * the "/\" (forward-slash, back-slash) to Redis.
+     *
+     * @param destination Server to send message to.
+     * @param channel Channel of the message.
+     * @param messagePieces The parts of the message.
+     */
+    public void publish(String destination, String channel, String... messagePieces)
+    {
+        String joinedMessage = String.join("/\\", messagePieces);
+        publish(destination, channel, joinedMessage);
     }
 
     /**

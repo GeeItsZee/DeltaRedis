@@ -16,10 +16,10 @@
  */
 package com.gmail.tracebachi.DeltaRedis.Spigot.Commands;
 
-import com.gmail.tracebachi.DeltaRedis.Shared.Redis.Servers;
+import com.gmail.tracebachi.DeltaRedis.Shared.Prefixes;
+import com.gmail.tracebachi.DeltaRedis.Shared.Servers;
 import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedisApi;
-import com.gmail.tracebachi.DeltaRedis.Spigot.Prefixes;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -59,22 +59,29 @@ public class RunCmdCommand implements CommandExecutor, Shutdownable
         {
             sender.sendMessage(Prefixes.INFO + "/runcmd server[,server,...] command");
             sender.sendMessage(Prefixes.INFO + "/runcmd ALL command");
-            sender.sendMessage(Prefixes.INFO + "/runcmd BUNGEECORD command");
+            sender.sendMessage(Prefixes.INFO + "/runcmd BUNGEE command");
             return true;
         }
 
-        Set<String> destServers = new HashSet<>(Arrays.asList(args[0].split(",")));
+        Set<String> argServers = new HashSet<>(Arrays.asList(args[0].split(",")));
         Set<String> servers = deltaApi.getCachedServers();
         String commandStr = joinArgsForCommand(args);
 
-        if(destServers.contains(Servers.BUNGEECORD) || destServers.contains("bungeecord"))
+        if(doesSetContain(argServers, "BUNGEE"))
         {
-            deltaApi.sendCommandToServer(Servers.BUNGEECORD, commandStr);
-            sender.sendMessage(Prefixes.SUCCESS +
-                "Sent command to " + Prefixes.input(Servers.BUNGEECORD));
+            if(deltaApi.isBungeeCordOnline())
+            {
+                deltaApi.sendCommandToServer(Servers.BUNGEECORD, commandStr);
+                sender.sendMessage(Prefixes.SUCCESS +
+                    "Sent command to " + Prefixes.input(Servers.BUNGEECORD));
+            }
+            else
+            {
+                sender.sendMessage(Prefixes.FAILURE +
+                    "BungeeCord is currently down.");
+            }
         }
-        else if(destServers.contains(Servers.SPIGOT) || destServers.contains("ALL") ||
-            destServers.contains("all"))
+        else if(doesSetContain(argServers, "ALL"))
         {
             deltaApi.sendCommandToServer(Servers.SPIGOT, commandStr);
             sender.sendMessage(Prefixes.SUCCESS +
@@ -82,7 +89,7 @@ public class RunCmdCommand implements CommandExecutor, Shutdownable
         }
         else
         {
-            for(String dest : destServers)
+            for(String dest : argServers)
             {
                 if(!servers.contains(dest))
                 {
@@ -103,5 +110,17 @@ public class RunCmdCommand implements CommandExecutor, Shutdownable
     private String joinArgsForCommand(String[] args)
     {
         return String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+    }
+
+    private boolean doesSetContain(Set<String> set, String source)
+    {
+        for(String item : set)
+        {
+            if(item.equalsIgnoreCase(source))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }

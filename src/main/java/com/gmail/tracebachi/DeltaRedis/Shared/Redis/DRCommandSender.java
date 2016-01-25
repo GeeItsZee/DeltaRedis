@@ -17,7 +17,8 @@
 package com.gmail.tracebachi.DeltaRedis.Shared.Redis;
 
 import com.gmail.tracebachi.DeltaRedis.Shared.Cache.CachedPlayer;
-import com.gmail.tracebachi.DeltaRedis.Shared.Interfaces.IDeltaRedis;
+import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisInterface;
+import com.gmail.tracebachi.DeltaRedis.Shared.Servers;
 import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import com.google.common.base.Preconditions;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
@@ -35,12 +36,13 @@ public class DRCommandSender implements Shutdownable
     private final String bungeeName;
 
     private StatefulRedisConnection<String, String> connection;
-    private IDeltaRedis plugin;
+    private DeltaRedisInterface plugin;
     private boolean isBungeeCordOnline;
     private Set<String> cachedServers;
     private Set<String> cachedPlayers;
 
-    public DRCommandSender(StatefulRedisConnection<String, String> connection, IDeltaRedis plugin)
+    public DRCommandSender(StatefulRedisConnection<String, String> connection,
+        DeltaRedisInterface plugin)
     {
         this.connection = connection;
         this.plugin = plugin;

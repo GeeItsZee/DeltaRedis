@@ -17,7 +17,7 @@
 package com.gmail.tracebachi.DeltaRedis.Bungee;
 
 import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisChannels;
-import com.gmail.tracebachi.DeltaRedis.Shared.Interfaces.IDeltaRedis;
+import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisInterface;
 import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import com.google.common.base.Preconditions;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
@@ -37,10 +37,10 @@ public class DeltaRedisListener implements Listener, Shutdownable
 {
     private final String bungeeName;
     private StatefulRedisConnection<String, String> connection;
-    private IDeltaRedis plugin;
+    private DeltaRedisInterface plugin;
 
     public DeltaRedisListener(StatefulRedisConnection<String, String> connection,
-        IDeltaRedis plugin)
+        DeltaRedisInterface plugin)
     {
         this.connection = connection;
         this.plugin = plugin;
@@ -104,7 +104,7 @@ public class DeltaRedisListener implements Listener, Shutdownable
 
         if(channel.equals(DeltaRedisChannels.RUN_CMD))
         {
-            plugin.info("[RunCmd] {SendingSender: " + event.getSendingServer() +
+            plugin.info("[RunCmd] {SendingServer: " + event.getSendingServer() +
                 " , Command: /" + command + "}");
 
             BungeeCord instance = BungeeCord.getInstance();

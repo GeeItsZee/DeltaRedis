@@ -19,15 +19,21 @@ package com.gmail.tracebachi.DeltaRedis.Spigot;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
+import java.util.regex.Pattern;
+
 /**
  * Created by Trace Bachi (tracebachi@gmail.com) on 10/18/15.
  */
 public class DeltaRedisMessageEvent extends Event
 {
+    public static final Pattern DELTA_PATTERN = Pattern.compile("/\\\\");
+    public static final Pattern NEWLINE_PATTERN = Pattern.compile("\\\\n");
+
     private static final HandlerList handlers = new HandlerList();
-    private String sendingServer;
-    private String channel;
-    private String message;
+
+    private final String sendingServer;
+    private final String channel;
+    private final String message;
 
     public DeltaRedisMessageEvent(String sendingServer, String channel, String message)
     {

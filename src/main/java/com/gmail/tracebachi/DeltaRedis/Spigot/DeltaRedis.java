@@ -16,10 +16,12 @@
  */
 package com.gmail.tracebachi.DeltaRedis.Spigot;
 
-import com.gmail.tracebachi.DeltaRedis.Shared.Interfaces.IDeltaRedis;
+import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisInterface;
 import com.gmail.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
 import com.gmail.tracebachi.DeltaRedis.Shared.Redis.DRPubSubListener;
-import com.gmail.tracebachi.DeltaRedis.Shared.Redis.Servers;
+import com.gmail.tracebachi.DeltaRedis.Shared.Servers;
+import com.gmail.tracebachi.DeltaRedis.Spigot.Commands.IsOnlineCommand;
+import com.gmail.tracebachi.DeltaRedis.Spigot.Commands.ListAllCommand;
 import com.gmail.tracebachi.DeltaRedis.Spigot.Commands.RunCmdCommand;
 import com.google.common.base.Preconditions;
 import com.lambdaworks.redis.RedisClient;
@@ -31,10 +33,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 /**
  * Created by Trace Bachi (tracebachi@gmail.com) on 10/18/15.
  */
-public class DeltaRedis extends JavaPlugin implements IDeltaRedis
+public class DeltaRedis extends JavaPlugin implements DeltaRedisInterface
 {
     private boolean debugEnabled;
     private DeltaRedisListener mainListener;
+    private IsOnlineCommand isOnlineCommand;
+    private ListAllCommand listAllCommand;
     private RunCmdCommand runCmdCommand;
 
     private RedisClient client;
@@ -85,6 +89,12 @@ public class DeltaRedis extends JavaPlugin implements IDeltaRedis
         mainListener = new DeltaRedisListener(this);
         getServer().getPluginManager().registerEvents(mainListener, this);
 
+        isOnlineCommand = new IsOnlineCommand(deltaRedisApi);
+        getCommand("isonline").setExecutor(isOnlineCommand);
+
+        listAllCommand = new ListAllCommand(deltaRedisApi);
+        getCommand("listall").setExecutor(listAllCommand);
+
         runCmdCommand = new RunCmdCommand(deltaRedisApi);
         getCommand("runcmd").setExecutor(runCmdCommand);
 
@@ -100,6 +110,20 @@ public class DeltaRedis extends JavaPlugin implements IDeltaRedis
     public void onDisable()
     {
         getServer().getScheduler().cancelTasks(this);
+
+        if(isOnlineCommand != null)
+        {
+            getCommand("isonline").setExecutor(null);
+            isOnlineCommand.shutdown();
+            isOnlineCommand = null;
+        }
+
+        if(listAllCommand != null)
+        {
+            getCommand("listall").setExecutor(null);
+            listAllCommand.shutdown();
+            listAllCommand = null;
+        }
 
         if(runCmdCommand != null)
         {

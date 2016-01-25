@@ -16,7 +16,7 @@
  */
 package com.gmail.tracebachi.DeltaRedis.Shared.Redis;
 
-import com.gmail.tracebachi.DeltaRedis.Shared.Interfaces.IDeltaRedis;
+import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisInterface;
 import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import com.lambdaworks.redis.pubsub.RedisPubSubListener;
 
@@ -30,9 +30,9 @@ public class DRPubSubListener implements RedisPubSubListener<String, String>, Sh
     private static final Pattern DELTA_PATTERN = Pattern.compile("/\\\\");
 
     private final String serverName;
-    private IDeltaRedis plugin;
+    private DeltaRedisInterface plugin;
 
-    public DRPubSubListener(IDeltaRedis plugin)
+    public DRPubSubListener(DeltaRedisInterface plugin)
     {
         this.plugin = plugin;
         this.serverName = plugin.getServerName();

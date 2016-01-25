@@ -18,10 +18,12 @@ package com.gmail.tracebachi.DeltaRedis.Bungee;
 
 import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisChannels;
 import com.gmail.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
-import com.gmail.tracebachi.DeltaRedis.Shared.Redis.Servers;
+import com.gmail.tracebachi.DeltaRedis.Shared.Servers;
 import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import com.google.common.base.Preconditions;
 import net.md_5.bungee.BungeeCord;
+
+import java.util.Set;
 
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 12/11/15.
@@ -42,6 +44,67 @@ public class DeltaRedisApi implements Shutdownable
     {
         this.deltaSender = null;
         this.plugin = null;
+    }
+
+    /**
+     * @return Name of the BungeeCord instance to which the server belongs.
+     * This value is set in the configuration file for each server.
+     */
+    public String getBungeeName()
+    {
+        return plugin.getBungeeName();
+    }
+
+    /**
+     * @return Name of the server (String). If the server is BungeeCord, the
+     * server name will be {@link Servers#BUNGEECORD}.
+     */
+    public String getServerName()
+    {
+        return plugin.getServerName();
+    }
+
+    /**
+     * @return An unmodifiable set of servers that are part of the same
+     * BungeeCord as the current server. This method will retrieve the
+     * servers from the last call to {@link DRCommandSender#getServers()}.
+     */
+    public Set<String> getCachedServers()
+    {
+        return deltaSender.getCachedServers();
+    }
+
+    /**
+     * @return True if the BungeeCord instance was last known to be online.
+     * False if it was not.
+     */
+    public boolean isBungeeCordOnline()
+    {
+        return deltaSender.isBungeeCordOnline();
+    }
+
+    /**
+     * @return An unmodifiable set of players (names) that are part of the
+     * same BungeeCord. This method will retrieve the players from the last
+     * call to {@link DRCommandSender#getPlayers()}.
+     */
+    public Set<String> getCachedPlayers()
+    {
+        return deltaSender.getCachedPlayers();
+    }
+
+    /**
+     * Publishes a message built from string message pieces joined by
+     * the "/\" (forward-slash, back-slash) to Redis.
+     *
+     * @param destination Server to send message to.
+     * @param channel Channel of the message.
+     * @param messagePieces The parts of the message.
+     */
+    public void publish(String destination, String channel, String... messagePieces)
+    {
+        String joinedMessage = String.join("/\\", messagePieces);
+        publish(destination, channel, joinedMessage);
     }
 
     /**

@@ -6,7 +6,7 @@
 
     <groupId>com.gmail.tracebachi</groupId>
     <artifactId>DeltaRedis</artifactId>
-    <version>1.5</version>
+    <version>1.6</version>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
