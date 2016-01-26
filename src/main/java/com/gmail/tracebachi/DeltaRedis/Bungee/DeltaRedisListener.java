@@ -18,6 +18,7 @@ package com.gmail.tracebachi.DeltaRedis.Bungee;
 
 import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisChannels;
 import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisInterface;
+import com.gmail.tracebachi.DeltaRedis.Shared.Registerable;
 import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import com.google.common.base.Preconditions;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
@@ -33,18 +34,30 @@ import java.util.HashMap;
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 11/29/15.
  */
-public class DeltaRedisListener implements Listener, Shutdownable
+public class DeltaRedisListener implements Listener, Registerable, Shutdownable
 {
     private final String bungeeName;
     private StatefulRedisConnection<String, String> connection;
-    private DeltaRedisInterface plugin;
+    private DeltaRedis plugin;
 
     public DeltaRedisListener(StatefulRedisConnection<String, String> connection,
-        DeltaRedisInterface plugin)
+        DeltaRedis plugin)
     {
         this.connection = connection;
         this.plugin = plugin;
         this.bungeeName = plugin.getBungeeName();
+    }
+
+    @Override
+    public void register()
+    {
+        plugin.getProxy().getPluginManager().registerListener(plugin, this);
+    }
+
+    @Override
+    public void unregister()
+    {
+        plugin.getProxy().getPluginManager().unregisterListener(this);
     }
 
     @Override

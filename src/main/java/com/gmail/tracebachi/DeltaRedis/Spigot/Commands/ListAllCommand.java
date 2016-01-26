@@ -17,7 +17,9 @@
 package com.gmail.tracebachi.DeltaRedis.Spigot.Commands;
 
 import com.gmail.tracebachi.DeltaRedis.Shared.Prefixes;
+import com.gmail.tracebachi.DeltaRedis.Shared.Registerable;
 import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
+import com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedis;
 import com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedisApi;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -31,18 +33,33 @@ import java.util.List;
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 11/28/15.
  */
-public class ListAllCommand implements CommandExecutor, Shutdownable
+public class ListAllCommand implements CommandExecutor, Registerable, Shutdownable
 {
     private DeltaRedisApi deltaApi;
+    private DeltaRedis plugin;
 
-    public ListAllCommand(DeltaRedisApi deltaApi)
+    public ListAllCommand(DeltaRedisApi deltaApi, DeltaRedis plugin)
     {
         this.deltaApi = deltaApi;
+        this.plugin = plugin;
+    }
+
+    @Override
+    public void register()
+    {
+        plugin.getCommand("listall").setExecutor(this);
+    }
+
+    @Override
+    public void unregister()
+    {
+        plugin.getCommand("listall").setExecutor(null);
     }
 
     @Override
     public void shutdown()
     {
+        unregister();
         deltaApi = null;
     }
 

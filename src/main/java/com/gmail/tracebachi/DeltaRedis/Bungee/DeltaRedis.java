@@ -88,56 +88,33 @@ public class DeltaRedis extends Plugin implements DeltaRedisInterface
         deltaRedisApi = new DeltaRedisApi(commandSender, this);
 
         mainListener = new DeltaRedisListener(commandConn, this);
-        getProxy().getPluginManager().registerListener(this, mainListener);
+        mainListener.register();
     }
 
     @Override
     public void onDisable()
     {
-        if(mainListener != null)
-        {
-            getProxy().getPluginManager().unregisterListener(mainListener);
-            mainListener.shutdown();
-            mainListener = null;
-        }
+        mainListener.shutdown();
+        mainListener = null;
 
-        if(deltaRedisApi != null)
-        {
-            deltaRedisApi.shutdown();
-            deltaRedisApi = null;
-        }
+        deltaRedisApi.shutdown();
+        deltaRedisApi = null;
 
-        if(commandSender != null)
-        {
-            commandSender.shutdown();
-            commandSender = null;
-        }
+        commandSender.shutdown();
+        commandSender = null;
 
-        if(commandConn != null)
-        {
-            commandConn.close();
-            commandConn = null;
-        }
+        commandConn.close();
+        commandConn = null;
 
-        if(pubSubConn != null)
-        {
-            pubSubConn.removeListener(pubSubListener);
-            pubSubConn.close();
-            pubSubConn = null;
-            pubSubListener = null;
-        }
+        pubSubConn.removeListener(pubSubListener);
+        pubSubConn.close();
+        pubSubConn = null;
 
-        if(pubSubListener != null)
-        {
-            pubSubListener.shutdown();
-            pubSubListener = null;
-        }
+        pubSubListener.shutdown();
+        pubSubListener = null;
 
-        if(client != null)
-        {
-            client.shutdown();
-            client = null;
-        }
+        client.shutdown();
+        client = null;
 
         debugEnabled = false;
     }

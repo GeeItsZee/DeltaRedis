@@ -17,29 +17,43 @@
 package com.gmail.tracebachi.DeltaRedis.Spigot;
 
 import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisChannels;
-import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisInterface;
+import com.gmail.tracebachi.DeltaRedis.Shared.Registerable;
 import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 
 /**
  * Created by Trace Bachi (tracebachi@gmail.com) on 10/18/15.
  */
-public class DeltaRedisListener implements Listener, Shutdownable
+public class DeltaRedisListener implements Listener, Registerable, Shutdownable
 {
-    private DeltaRedisInterface plugin;
+    private DeltaRedis plugin;
 
-    public DeltaRedisListener(DeltaRedisInterface plugin)
+    public DeltaRedisListener(DeltaRedis plugin)
     {
         this.plugin = plugin;
     }
 
     @Override
+    public void register()
+    {
+        plugin.getServer().getPluginManager().registerEvents(this, plugin);
+    }
+
+    @Override
+    public void unregister()
+    {
+        HandlerList.unregisterAll(this);
+    }
+
+    @Override
     public void shutdown()
     {
-        this.plugin = null;
+        unregister();
+        plugin = null;
     }
 
     @EventHandler

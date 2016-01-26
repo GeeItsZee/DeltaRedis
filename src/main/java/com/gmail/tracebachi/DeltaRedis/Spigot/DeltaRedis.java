@@ -87,16 +87,16 @@ public class DeltaRedis extends JavaPlugin implements DeltaRedisInterface
         deltaRedisApi = new DeltaRedisApi(commandSender, this);
 
         mainListener = new DeltaRedisListener(this);
-        getServer().getPluginManager().registerEvents(mainListener, this);
+        mainListener.register();
 
-        isOnlineCommand = new IsOnlineCommand(deltaRedisApi);
-        getCommand("isonline").setExecutor(isOnlineCommand);
+        isOnlineCommand = new IsOnlineCommand(deltaRedisApi, this);
+        isOnlineCommand.register();
 
-        listAllCommand = new ListAllCommand(deltaRedisApi);
-        getCommand("listall").setExecutor(listAllCommand);
+        listAllCommand = new ListAllCommand(deltaRedisApi, this);
+        listAllCommand.register();
 
-        runCmdCommand = new RunCmdCommand(deltaRedisApi);
-        getCommand("runcmd").setExecutor(runCmdCommand);
+        runCmdCommand = new RunCmdCommand(deltaRedisApi, this);
+        runCmdCommand.register();
 
         int updatePeriod = getConfig().getInt("OnlineUpdatePeriod", 300);
         getServer().getScheduler().runTaskTimerAsynchronously(this, () ->
@@ -111,70 +111,36 @@ public class DeltaRedis extends JavaPlugin implements DeltaRedisInterface
     {
         getServer().getScheduler().cancelTasks(this);
 
-        if(isOnlineCommand != null)
-        {
-            getCommand("isonline").setExecutor(null);
-            isOnlineCommand.shutdown();
-            isOnlineCommand = null;
-        }
+        isOnlineCommand.shutdown();
+        isOnlineCommand = null;
 
-        if(listAllCommand != null)
-        {
-            getCommand("listall").setExecutor(null);
-            listAllCommand.shutdown();
-            listAllCommand = null;
-        }
+        listAllCommand.shutdown();
+        listAllCommand = null;
 
-        if(runCmdCommand != null)
-        {
-            getCommand("runcmd").setExecutor(null);
-            runCmdCommand.shutdown();
-            runCmdCommand = null;
-        }
+        runCmdCommand.shutdown();
+        runCmdCommand = null;
 
-        if(mainListener != null)
-        {
-            mainListener.shutdown();
-            mainListener = null;
-        }
+        mainListener.shutdown();
+        mainListener = null;
 
-        if(deltaRedisApi != null)
-        {
-            deltaRedisApi.shutdown();
-            deltaRedisApi = null;
-        }
+        deltaRedisApi.shutdown();
+        deltaRedisApi = null;
 
-        if(commandSender != null)
-        {
-            commandSender.shutdown();
-            commandSender = null;
-        }
+        commandSender.shutdown();
+        commandSender = null;
 
-        if(standaloneConn != null)
-        {
-            standaloneConn.close();
-            standaloneConn = null;
-        }
+        standaloneConn.close();
+        standaloneConn = null;
 
-        if(pubSubConn != null)
-        {
-            pubSubConn.removeListener(pubSubListener);
-            pubSubConn.close();
-            pubSubConn = null;
-            pubSubListener = null;
-        }
+        pubSubConn.removeListener(pubSubListener);
+        pubSubConn.close();
+        pubSubConn = null;
 
-        if(pubSubListener != null)
-        {
-            pubSubListener.shutdown();
-            pubSubListener = null;
-        }
+        pubSubListener.shutdown();
+        pubSubListener = null;
 
-        if(client != null)
-        {
-            client.shutdown();
-            client = null;
-        }
+        client.shutdown();
+        client = null;
     }
 
     public DeltaRedisApi getDeltaRedisApi()

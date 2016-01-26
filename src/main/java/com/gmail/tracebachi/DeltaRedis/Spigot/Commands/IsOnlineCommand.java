@@ -16,7 +16,9 @@
  */
 package com.gmail.tracebachi.DeltaRedis.Spigot.Commands;
 
+import com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedis;
 import com.gmail.tracebachi.DeltaRedis.Shared.Prefixes;
+import com.gmail.tracebachi.DeltaRedis.Shared.Registerable;
 import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedisApi;
 import org.bukkit.Bukkit;
@@ -28,18 +30,33 @@ import org.bukkit.entity.Player;
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 11/28/15.
  */
-public class IsOnlineCommand implements CommandExecutor, Shutdownable
+public class IsOnlineCommand implements CommandExecutor, Registerable, Shutdownable
 {
     private DeltaRedisApi deltaApi;
+    private DeltaRedis plugin;
 
-    public IsOnlineCommand(DeltaRedisApi deltaApi)
+    public IsOnlineCommand(DeltaRedisApi deltaApi, DeltaRedis plugin)
     {
         this.deltaApi = deltaApi;
+        this.plugin = plugin;
+    }
+
+    @Override
+    public void register()
+    {
+        plugin.getCommand("isonline").setExecutor(this);
+    }
+
+    @Override
+    public void unregister()
+    {
+        plugin.getCommand("isonline").setExecutor(null);
     }
 
     @Override
     public void shutdown()
     {
+        unregister();
         deltaApi = null;
     }
 

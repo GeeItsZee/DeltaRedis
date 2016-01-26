@@ -17,8 +17,10 @@
 package com.gmail.tracebachi.DeltaRedis.Spigot.Commands;
 
 import com.gmail.tracebachi.DeltaRedis.Shared.Prefixes;
+import com.gmail.tracebachi.DeltaRedis.Shared.Registerable;
 import com.gmail.tracebachi.DeltaRedis.Shared.Servers;
 import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
+import com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedis;
 import com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedisApi;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -31,18 +33,33 @@ import java.util.Set;
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 11/28/15.
  */
-public class RunCmdCommand implements CommandExecutor, Shutdownable
+public class RunCmdCommand implements CommandExecutor, Registerable, Shutdownable
 {
     private DeltaRedisApi deltaApi;
+    private DeltaRedis plugin;
 
-    public RunCmdCommand(DeltaRedisApi deltaApi)
+    public RunCmdCommand(DeltaRedisApi deltaApi, DeltaRedis plugin)
     {
         this.deltaApi = deltaApi;
+        this.plugin = plugin;
+    }
+
+    @Override
+    public void register()
+    {
+        plugin.getCommand("runcmd").setExecutor(this);
+    }
+
+    @Override
+    public void unregister()
+    {
+        plugin.getCommand("runcmd").setExecutor(null);
     }
 
     @Override
     public void shutdown()
     {
+        unregister();
         deltaApi = null;
     }
 
