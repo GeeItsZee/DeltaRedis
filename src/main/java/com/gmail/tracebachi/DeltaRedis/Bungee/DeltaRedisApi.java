@@ -16,6 +16,7 @@
  */
 package com.gmail.tracebachi.DeltaRedis.Bungee;
 
+import com.gmail.tracebachi.DeltaRedis.Shared.Cache.CachedPlayer;
 import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisChannels;
 import com.gmail.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
 import com.gmail.tracebachi.DeltaRedis.Shared.Servers;
@@ -131,7 +132,35 @@ public class DeltaRedisApi implements Shutdownable
     }
 
     /**
-     * Sends a message to a player in the specified server.
+     * Sends a message to a player on an unknown server. The message will not
+     * reach the player if they have logged off by the time the message
+     * reaches the server or if not player is online by the specified name.
+     *
+     * @param playerName Name of the player to send message to.
+     * @param message Message to send.
+     */
+    public void sendMessageToPlayer(String playerName, String message)
+    {
+        Preconditions.checkNotNull(playerName, "Player name cannot be null.");
+        Preconditions.checkNotNull(message, "Message cannot be null.");
+
+        BungeeCord.getInstance().getScheduler().runAsync(plugin, () ->
+        {
+            CachedPlayer cachedPlayer = deltaSender.getPlayer(playerName);
+
+            if(cachedPlayer != null)
+            {
+                deltaSender.publish(cachedPlayer.getServer(),
+                    DeltaRedisChannels.SEND_MESSAGE,
+                    playerName + "/\\" + message);
+            }
+        });
+    }
+
+    /**
+     * Sends a message to a player in the specified server. The message will not
+     * reach the player if they have logged off by the time the message
+     * reaches the server.
      *
      * @param server Name of the server to send the message to.
      * @param playerName Name of the player to send message to.
@@ -158,7 +187,7 @@ public class DeltaRedisApi implements Shutdownable
      */
     public void sendAnnouncementToServer(String destServer, String announcement)
     {
-        sendAnnouncementToServer(destServer, announcement, null);
+        sendAnnouncementToServer(destServer, announcement, "");
     }
 
     /**
