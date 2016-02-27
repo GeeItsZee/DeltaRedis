@@ -28,6 +28,7 @@ public class DeltaRedisMessageEvent extends Event
 {
     public static final Pattern DELTA_PATTERN = Pattern.compile("/\\\\");
     public static final Pattern NEWLINE_PATTERN = Pattern.compile("\\\\n");
+    public static final Pattern COMMA_PATTERN = Pattern.compile(",");
 
     private static final HandlerList handlers = new HandlerList();
 

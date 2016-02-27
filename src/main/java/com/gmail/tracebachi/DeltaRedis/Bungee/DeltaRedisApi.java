@@ -151,21 +151,34 @@ public class DeltaRedisApi implements Shutdownable
     }
 
     /**
-     * Sends a message to a player in the specified server.
+     * Sends an announcement to all players on a server.
      *
-     * @param destServer Name of the server to send the message to.
+     * @param destServer Destination server name or {@link Servers#SPIGOT}.
      * @param announcement Announcement to send.
      */
     public void sendAnnouncementToServer(String destServer, String announcement)
     {
+        sendAnnouncementToServer(destServer, announcement, null);
+    }
+
+    /**
+     * Sends an announcement to all players on a server with a specific
+     * permission.
+     *
+     * @param destServer Destination server name or {@link Servers#SPIGOT}.
+     * @param announcement Announcement to send.
+     * @param permission Permission that a player must have to receive the
+     *                   announcement. The empty string, "", can be used to
+     *                   signal that a permission is not required.
+     */
+    public void sendAnnouncementToServer(String destServer, String announcement, String permission)
+    {
         Preconditions.checkNotNull(destServer, "Destination server cannot be null.");
         Preconditions.checkNotNull(announcement, "Announcement cannot be null.");
-        Preconditions.checkArgument(!destServer.equals(Servers.BUNGEECORD),
-            "Server cannot be BungeeCord.");
+        Preconditions.checkNotNull(permission, "Permission cannot be null");
 
         BungeeCord.getInstance().getScheduler().runAsync(plugin,
             () -> deltaSender.publish(destServer,
-                DeltaRedisChannels.SEND_ANNOUNCEMENT,
-                announcement));
+                DeltaRedisChannels.SEND_ANNOUNCEMENT, announcement + "/\\" + permission));
     }
 }

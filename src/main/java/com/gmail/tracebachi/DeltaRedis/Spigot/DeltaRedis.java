@@ -99,6 +99,7 @@ public class DeltaRedis extends JavaPlugin implements DeltaRedisInterface
         runCmdCommand.register();
 
         int updatePeriod = getConfig().getInt("OnlineUpdatePeriod", 300);
+
         getServer().getScheduler().runTaskTimerAsynchronously(this, () ->
         {
             commandSender.getServers();
@@ -152,9 +153,9 @@ public class DeltaRedis extends JavaPlugin implements DeltaRedisInterface
     public void onRedisMessageEvent(String source, String channel, String message)
     {
         DeltaRedisMessageEvent event = new DeltaRedisMessageEvent(source, channel, message);
+
         getServer().getScheduler().runTask(this,
             () -> getServer().getPluginManager().callEvent(event));
-
     }
 
     @Override

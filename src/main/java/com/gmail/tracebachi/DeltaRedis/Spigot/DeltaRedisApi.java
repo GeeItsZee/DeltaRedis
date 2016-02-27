@@ -147,6 +147,20 @@ public class DeltaRedisApi implements Shutdownable
      */
     public void findPlayer(String playerName, CachedPlayerCallback callback)
     {
+        findPlayer(playerName, callback, false);
+    }
+
+    /**
+     * Asynchronously looks for the player in Redis. The callback is called
+     * with the {@link CachedPlayer} or null.
+     *
+     * @param playerName Name of the player to find.
+     * @param callback Callback to run when fetch is complete.
+     * @param isCallbackAsync True if callback should be run asynchronously.
+     *                        False if callback should be run synchronously.
+     */
+    public void findPlayer(String playerName, CachedPlayerCallback callback, boolean isCallbackAsync)
+    {
         Preconditions.checkNotNull(playerName, "Player name cannot be null.");
         Preconditions.checkNotNull(callback, "Callback cannot be null.");
 
@@ -154,8 +168,15 @@ public class DeltaRedisApi implements Shutdownable
         {
             CachedPlayer cachedPlayer = deltaSender.getPlayer(playerName);
 
-            Bukkit.getScheduler().runTask(plugin,
-                () -> callback.call(cachedPlayer));
+            if(isCallbackAsync)
+            {
+                callback.call(cachedPlayer);
+            }
+            else
+            {
+                Bukkit.getScheduler().runTask(plugin,
+                    () -> callback.call(cachedPlayer));
+            }
         });
     }
 
@@ -255,32 +276,55 @@ public class DeltaRedisApi implements Shutdownable
     }
 
     /**
-     * Sends an announcement to all players on a different server. This method
-     * should not be used to send announcements on the current server.
-     * That message will be ignored.
-     *
-     * It does not send a message if the player is offline. This method should
-     * not be used to send messages to players that are online on the current server.
+     * Sends an announcement to all players on a server. If
+     * {@link Servers#SPIGOT} is used, the announcement will also be performed
+     * on the current server.
      *
      * @param destServer Destination server name or {@link Servers#SPIGOT}.
      * @param announcement Announcement to send.
      */
     public void sendAnnouncementToServer(String destServer, String announcement)
     {
+        sendAnnouncementToServer(destServer, announcement, null);
+    }
+
+    /**
+     * Sends an announcement to all players on a server. If
+     * {@link Servers#SPIGOT} is used, the announcement will also be performed
+     * on the current server.
+     *
+     * @param destServer Destination server name or {@link Servers#SPIGOT}.
+     * @param announcement Announcement to send.
+     * @param permission Permission that a player must have to receive the
+     *                   announcement. The empty string, "", can be used to
+     *                   signal that a permission is not required.
+     */
+    public void sendAnnouncementToServer(String destServer, String announcement, String permission)
+    {
         Preconditions.checkNotNull(destServer, "Destination server cannot be null.");
         Preconditions.checkNotNull(announcement, "Announcement cannot be null.");
+        Preconditions.checkNotNull(permission, "Permission cannot be null.");
 
         if(destServer.equals(Servers.SPIGOT))
         {
+            if(permission.equals(""))
+            {
+                Bukkit.broadcastMessage(announcement);
+            }
+            else
+            {
+                Bukkit.broadcast(announcement, permission);
+            }
+
             Bukkit.getScheduler().runTaskAsynchronously(plugin,
                 () -> deltaSender.publish(Servers.SPIGOT,
-                    DeltaRedisChannels.SEND_ANNOUNCEMENT, announcement));
+                    DeltaRedisChannels.SEND_ANNOUNCEMENT, announcement + "/\\" + permission));
         }
         else
         {
             Bukkit.getScheduler().runTaskAsynchronously(plugin,
                 () -> deltaSender.publish(destServer,
-                    DeltaRedisChannels.SEND_ANNOUNCEMENT, announcement));
+                    DeltaRedisChannels.SEND_ANNOUNCEMENT, announcement + "/\\" + permission));
         }
     }
 }

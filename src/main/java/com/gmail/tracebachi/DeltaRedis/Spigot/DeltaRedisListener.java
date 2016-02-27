@@ -25,6 +25,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 
+import static com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedisMessageEvent.*;
+
 /**
  * Created by Trace Bachi (tracebachi@gmail.com) on 10/18/15.
  */
@@ -71,24 +73,30 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
         }
         else if(channel.equals(DeltaRedisChannels.SEND_ANNOUNCEMENT))
         {
-            String[] lines = DeltaRedisMessageEvent.DELTA_PATTERN
-                .split(eventMessage);
+            String[] splitMessage = DELTA_PATTERN.split(eventMessage);
+            String[] lines = NEWLINE_PATTERN.split(splitMessage[0]);
+            String permission = splitMessage[1];
 
-            for(Player player : Bukkit.getOnlinePlayers())
+            if(permission.equals(""))
             {
                 for(String line : lines)
                 {
-                    player.sendMessage(line);
+                    Bukkit.broadcastMessage(line);
+                }
+            }
+            else
+            {
+                for(String line : lines)
+                {
+                    Bukkit.broadcast(line, permission);
                 }
             }
         }
         else if(channel.equals(DeltaRedisChannels.SEND_MESSAGE))
         {
-            String[] receiverAndMessage = DeltaRedisMessageEvent.DELTA_PATTERN
-                .split(eventMessage, 2);
+            String[] receiverAndMessage = DELTA_PATTERN.split(eventMessage, 2);
             String receiverName = receiverAndMessage[0];
-            String[] lines = DeltaRedisMessageEvent.NEWLINE_PATTERN
-                .split(receiverAndMessage[1]);
+            String[] lines = NEWLINE_PATTERN.split(receiverAndMessage[1]);
 
             if(receiverName.equalsIgnoreCase("console"))
             {
@@ -100,6 +108,7 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
             else
             {
                 Player receiver = Bukkit.getPlayer(receiverName);
+
                 if(receiver != null && receiver.isOnline())
                 {
                     for(String line : lines)
