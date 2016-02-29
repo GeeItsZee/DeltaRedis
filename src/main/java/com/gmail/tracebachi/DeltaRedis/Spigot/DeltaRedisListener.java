@@ -73,7 +73,7 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
         }
         else if(channel.equals(DeltaRedisChannels.SEND_ANNOUNCEMENT))
         {
-            String[] splitMessage = DELTA_PATTERN.split(eventMessage);
+            String[] splitMessage = DELTA_PATTERN.split(eventMessage, -1);
             String[] lines = NEWLINE_PATTERN.split(splitMessage[0]);
             String permission = splitMessage[1];
 

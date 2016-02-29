@@ -285,7 +285,7 @@ public class DeltaRedisApi implements Shutdownable
      */
     public void sendAnnouncementToServer(String destServer, String announcement)
     {
-        sendAnnouncementToServer(destServer, announcement, null);
+        sendAnnouncementToServer(destServer, announcement, "");
     }
 
     /**
