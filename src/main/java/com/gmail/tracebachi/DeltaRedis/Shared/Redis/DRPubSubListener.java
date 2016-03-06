@@ -73,7 +73,7 @@ public class DRPubSubListener implements RedisPubSubListener<String, String>, Sh
             }
             else
             {
-                plugin.info("Ignored message received from self.");
+                plugin.debug("Ignored message received from self.");
             }
         }
         else
