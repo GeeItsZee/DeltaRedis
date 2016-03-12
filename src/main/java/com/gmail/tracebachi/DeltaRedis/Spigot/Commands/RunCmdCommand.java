@@ -108,14 +108,16 @@ public class RunCmdCommand implements CommandExecutor, Registerable, Shutdownabl
         {
             for(String dest : argServers)
             {
-                if(!servers.contains(dest))
+                String correctedDest = getMatchInSet(servers, dest);
+
+                if(correctedDest == null)
                 {
                     sender.sendMessage(Prefixes.FAILURE + Prefixes.input(dest) +
                         " is offline or non-existent.");
                 }
                 else
                 {
-                    deltaApi.sendCommandToServer(dest, commandStr);
+                    deltaApi.sendCommandToServer(correctedDest, commandStr);
                     sender.sendMessage(Prefixes.SUCCESS + "Sent command to " +
                         Prefixes.input(dest));
                 }
@@ -139,5 +141,17 @@ public class RunCmdCommand implements CommandExecutor, Registerable, Shutdownabl
             }
         }
         return false;
+    }
+
+    private String getMatchInSet(Set<String> set, String source)
+    {
+        for(String item : set)
+        {
+            if(item.equalsIgnoreCase(source))
+            {
+                return item;
+            }
+        }
+        return null;
     }
 }
