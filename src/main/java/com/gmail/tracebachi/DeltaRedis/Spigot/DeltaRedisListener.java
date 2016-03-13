@@ -25,7 +25,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 
-import static com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedisMessageEvent.*;
+import static com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedisMessageEvent.DELTA_PATTERN;
+import static com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedisMessageEvent.NEWLINE_PATTERN;
 
 /**
  * Created by Trace Bachi (tracebachi@gmail.com) on 10/18/15.

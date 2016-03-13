@@ -61,6 +61,7 @@ public class ListAllCommand implements CommandExecutor, Registerable, Shutdownab
     {
         unregister();
         deltaApi = null;
+        plugin = null;
     }
 
     @Override

@@ -61,6 +61,7 @@ public class RunCmdCommand implements CommandExecutor, Registerable, Shutdownabl
     {
         unregister();
         deltaApi = null;
+        plugin = null;
     }
 
     @Override

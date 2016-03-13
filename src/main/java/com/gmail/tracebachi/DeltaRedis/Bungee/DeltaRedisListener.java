@@ -17,7 +17,6 @@
 package com.gmail.tracebachi.DeltaRedis.Bungee;
 
 import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisChannels;
-import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisInterface;
 import com.gmail.tracebachi.DeltaRedis.Shared.Registerable;
 import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import com.google.common.base.Preconditions;

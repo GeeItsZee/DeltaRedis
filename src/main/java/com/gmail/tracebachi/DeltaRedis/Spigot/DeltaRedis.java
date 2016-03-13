@@ -20,14 +20,18 @@ import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisInterface;
 import com.gmail.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
 import com.gmail.tracebachi.DeltaRedis.Shared.Redis.DRPubSubListener;
 import com.gmail.tracebachi.DeltaRedis.Shared.Servers;
+import com.gmail.tracebachi.DeltaRedis.Spigot.Commands.DebugCommand;
 import com.gmail.tracebachi.DeltaRedis.Spigot.Commands.IsOnlineCommand;
 import com.gmail.tracebachi.DeltaRedis.Spigot.Commands.ListAllCommand;
 import com.gmail.tracebachi.DeltaRedis.Spigot.Commands.RunCmdCommand;
 import com.google.common.base.Preconditions;
+import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
+import com.lambdaworks.redis.resource.ClientResources;
+import com.lambdaworks.redis.resource.DefaultClientResources;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -37,10 +41,12 @@ public class DeltaRedis extends JavaPlugin implements DeltaRedisInterface
 {
     private boolean debugEnabled;
     private DeltaRedisListener mainListener;
+    private DebugCommand debugCommand;
     private IsOnlineCommand isOnlineCommand;
     private ListAllCommand listAllCommand;
     private RunCmdCommand runCmdCommand;
 
+    private ClientResources resources;
     private RedisClient client;
     private DRPubSubListener pubSubListener;
     private DRCommandSender commandSender;
@@ -59,7 +65,7 @@ public class DeltaRedis extends JavaPlugin implements DeltaRedisInterface
     {
         info("-----------------------------------------------------------------");
         info("[IMPORTANT] Please make sure that \'ServerName\' is *exactly* the same as your BungeeCord config for this server.");
-        info("[IMPORTANT] DeltaRedis and all plugins that depend on it will not run correctly if the name is not correct.");
+        info("[IMPORTANT] DeltaRedis and all plugins that depend on it may not run correctly if the name is not correct.");
         info("[IMPORTANT] \'World\' is not the same as \'world\'");
         info("-----------------------------------------------------------------");
 
@@ -71,7 +77,15 @@ public class DeltaRedis extends JavaPlugin implements DeltaRedisInterface
         Preconditions.checkArgument(getConfig().contains("ServerNameInBungeeCord"),
             "ServerNameInBungeeCord not specified.");
 
-        client = RedisClient.create(getRedisUri());
+        ClientOptions.Builder optionBuilder = new ClientOptions.Builder();
+        optionBuilder.autoReconnect(true);
+
+        resources = new DefaultClientResources.Builder()
+            .ioThreadPoolSize(4)
+            .computationThreadPoolSize(4)
+            .build();
+
+        client = RedisClient.create(resources, getRedisUri());
         pubSubConn = client.connectPubSub();
         standaloneConn = client.connect();
 
@@ -88,6 +102,9 @@ public class DeltaRedis extends JavaPlugin implements DeltaRedisInterface
 
         mainListener = new DeltaRedisListener(this);
         mainListener.register();
+
+        debugCommand = new DebugCommand(this);
+        debugCommand.register();
 
         isOnlineCommand = new IsOnlineCommand(deltaRedisApi, this);
         isOnlineCommand.register();
@@ -112,14 +129,17 @@ public class DeltaRedis extends JavaPlugin implements DeltaRedisInterface
     {
         getServer().getScheduler().cancelTasks(this);
 
-        isOnlineCommand.shutdown();
-        isOnlineCommand = null;
-
         listAllCommand.shutdown();
         listAllCommand = null;
 
         runCmdCommand.shutdown();
         runCmdCommand = null;
+
+        isOnlineCommand.shutdown();
+        isOnlineCommand = null;
+
+        debugCommand.shutdown();
+        debugCommand = null;
 
         mainListener.shutdown();
         mainListener = null;
@@ -142,11 +162,24 @@ public class DeltaRedis extends JavaPlugin implements DeltaRedisInterface
 
         client.shutdown();
         client = null;
+
+        resources.shutdown();
+        resources = null;
     }
 
     public DeltaRedisApi getDeltaRedisApi()
     {
         return deltaRedisApi;
+    }
+
+    public boolean isDebugEnabled()
+    {
+        return debugEnabled;
+    }
+
+    public void setDebugEnabled(boolean debugEnabled)
+    {
+        this.debugEnabled = debugEnabled;
     }
 
     @Override

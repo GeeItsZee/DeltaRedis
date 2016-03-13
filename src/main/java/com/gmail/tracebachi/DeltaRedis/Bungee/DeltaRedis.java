@@ -26,6 +26,8 @@ import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
+import com.lambdaworks.redis.resource.ClientResources;
+import com.lambdaworks.redis.resource.DefaultClientResources;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
@@ -43,6 +45,7 @@ public class DeltaRedis extends Plugin implements DeltaRedisInterface
 {
     private boolean debugEnabled;
     private Configuration config;
+    private ClientResources resources;
     private RedisClient client;
     private DRPubSubListener pubSubListener;
     private DRCommandSender commandSender;
@@ -73,7 +76,13 @@ public class DeltaRedis extends Plugin implements DeltaRedisInterface
 
         ClientOptions.Builder optionBuilder = new ClientOptions.Builder();
         optionBuilder.autoReconnect(true);
-        client = RedisClient.create(getRedisUri(config));
+
+        resources = new DefaultClientResources.Builder()
+            .ioThreadPoolSize(4)
+            .computationThreadPoolSize(4)
+            .build();
+
+        client = RedisClient.create(resources, getRedisUri(config));
         client.setOptions(optionBuilder.build());
         pubSubConn = client.connectPubSub();
         commandConn = client.connect();
@@ -115,6 +124,9 @@ public class DeltaRedis extends Plugin implements DeltaRedisInterface
 
         client.shutdown();
         client = null;
+
+        resources.shutdown();
+        resources = null;
 
         debugEnabled = false;
     }

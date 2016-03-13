@@ -1,8 +1,11 @@
 name: DeltaRedis
 main: com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedis
-version: 1.7
+version: 1.8
 author: Trace Bachi (tracebachi@gmail.com, BigBossZee)
 commands:
+  deltaredisdebug:
+    description: Allows the user to toggle debug logging for DeltaRedis.
+    aliases: []
   isonline:
     description: Allows the user to check if a player is online.
     aliases: [find]
@@ -13,9 +16,11 @@ commands:
     description: Allows the user to send commands to other servers that will get run by that server's console.
     aliases: [rc]
 permissions:
-  DeltaRedis.RunCmd:
-    description: Permission to use /runcmd
+  DeltaRedis.Debug:
+    description: Permission to use /deltaredisdebug
   DeltaRedis.IsOnline:
     description: Permission to use /isonline
   DeltaRedis.ListAll:
     description: Permission to use /listall
+  DeltaRedis.RunCmd:
+    description: Permission to use /runcmd
