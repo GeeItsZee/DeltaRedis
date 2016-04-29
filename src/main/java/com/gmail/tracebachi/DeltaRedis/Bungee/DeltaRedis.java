@@ -16,6 +16,7 @@
  */
 package com.gmail.tracebachi.DeltaRedis.Bungee;
 
+import com.gmail.tracebachi.DeltaRedis.Bungee.Commands.RunCmdBungeeCommand;
 import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisInterface;
 import com.gmail.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
 import com.gmail.tracebachi.DeltaRedis.Shared.Redis.DRPubSubListener;
@@ -37,6 +38,7 @@ import net.md_5.bungee.config.YamlConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Trace Bachi (tracebachi@gmail.com) on 10/18/15.
@@ -53,6 +55,7 @@ public class DeltaRedis extends Plugin implements DeltaRedisInterface
     private StatefulRedisConnection<String, String> commandConn;
 
     private DeltaRedisListener mainListener;
+    private RunCmdBungeeCommand runCmdBungeeCommand;
     private DeltaRedisApi deltaRedisApi;
 
     @Override
@@ -98,11 +101,23 @@ public class DeltaRedis extends Plugin implements DeltaRedisInterface
 
         mainListener = new DeltaRedisListener(commandConn, this);
         mainListener.register();
+
+        runCmdBungeeCommand = new RunCmdBungeeCommand(deltaRedisApi, this);
+        runCmdBungeeCommand.register();
+
+        getProxy().getScheduler().schedule(this, () ->
+        {
+            commandSender.getServers();
+            commandSender.getPlayers();
+        }, 1, 1, TimeUnit.SECONDS);
     }
 
     @Override
     public void onDisable()
     {
+        runCmdBungeeCommand.shutdown();
+        runCmdBungeeCommand = null;
+
         mainListener.shutdown();
         mainListener = null;
 

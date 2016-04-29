@@ -132,6 +132,30 @@ public class DeltaRedisApi implements Shutdownable
     }
 
     /**
+     * Sends a command that will run as OP by the receiving server.
+     *
+     * @param destServer Destination server name or {@link Servers#SPIGOT}.
+     * @param command Command to send.
+     */
+    public void sendCommandToServer(String destServer, String command)
+    {
+        Preconditions.checkNotNull(destServer, "Destination server cannot be null.");
+        Preconditions.checkNotNull(command, "Command cannot be null.");
+        Preconditions.checkArgument(!destServer.equals(Servers.BUNGEECORD), "Destination server cannot be BungeeCord.");
+
+        if(destServer.equals(Servers.SPIGOT))
+        {
+            BungeeCord.getInstance().getScheduler().runAsync(plugin, () ->
+                deltaSender.publish(Servers.SPIGOT, DeltaRedisChannels.RUN_CMD, command));
+        }
+        else
+        {
+            BungeeCord.getInstance().getScheduler().runAsync(plugin, () ->
+                deltaSender.publish(destServer, DeltaRedisChannels.RUN_CMD, command));
+        }
+    }
+
+    /**
      * Sends a message to a player on an unknown server. The message will not
      * reach the player if they have logged off by the time the message
      * reaches the server or if not player is online by the specified name.
