@@ -107,8 +107,11 @@ public class DeltaRedis extends Plugin implements DeltaRedisInterface
 
         getProxy().getScheduler().schedule(this, () ->
         {
-            commandSender.getServers();
-            commandSender.getPlayers();
+            if(commandSender != null)
+            {
+                commandSender.getServers();
+                commandSender.getPlayers();
+            }
         }, 1, 1, TimeUnit.SECONDS);
     }
 
