@@ -16,7 +16,6 @@
  */
 package com.gmail.tracebachi.DeltaRedis.Spigot.Commands;
 
-import com.gmail.tracebachi.DeltaRedis.Shared.Prefixes;
 import com.gmail.tracebachi.DeltaRedis.Shared.Registerable;
 import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedis;
@@ -27,17 +26,17 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import static com.gmail.tracebachi.DeltaRedis.Shared.Prefixes.*;
+
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 11/28/15.
  */
 public class IsOnlineCommand implements CommandExecutor, Registerable, Shutdownable
 {
-    private DeltaRedisApi deltaApi;
     private DeltaRedis plugin;
 
-    public IsOnlineCommand(DeltaRedisApi deltaApi, DeltaRedis plugin)
+    public IsOnlineCommand(DeltaRedis plugin)
     {
-        this.deltaApi = deltaApi;
         this.plugin = plugin;
     }
 
@@ -57,7 +56,6 @@ public class IsOnlineCommand implements CommandExecutor, Registerable, Shutdowna
     public void shutdown()
     {
         unregister();
-        deltaApi = null;
         plugin = null;
     }
 
@@ -66,33 +64,34 @@ public class IsOnlineCommand implements CommandExecutor, Registerable, Shutdowna
     {
         if(!sender.hasPermission("DeltaRedis.IsOnline"))
         {
-            sender.sendMessage(Prefixes.FAILURE + "You do not have permission to run this command.");
+            sender.sendMessage(FAILURE + "You do not have permission to run this command.");
             return true;
         }
 
         if(args.length < 1)
         {
-            sender.sendMessage(Prefixes.INFO + "/isonline <name>");
+            sender.sendMessage(INFO + "/isonline <name>");
             return true;
         }
 
         String senderName = sender.getName();
         String nameToFind = args[0];
 
-        deltaApi.findPlayer(nameToFind, (cachedPlayer) ->
+        DeltaRedisApi.instance().findPlayer(nameToFind, (cachedPlayer) ->
         {
             if(cachedPlayer != null)
             {
-                sendMessage(senderName, Prefixes.INFO + Prefixes.input(nameToFind) +
-                    " is " + Prefixes.input("online") +
-                    " on " + Prefixes.input(cachedPlayer.getServer()));
+                sendMessage(senderName, INFO + input(nameToFind) +
+                    " is " + input("online") +
+                    " on " + input(cachedPlayer.getServer()));
             }
             else
             {
-                sendMessage(senderName, Prefixes.INFO + Prefixes.input(nameToFind) +
-                    " is " + Prefixes.input("offline"));
+                sendMessage(senderName, INFO + input(nameToFind) +
+                    " is " + input("offline"));
             }
         });
+
         return true;
     }
 

@@ -30,6 +30,8 @@ import net.md_5.bungee.event.EventHandler;
 
 import java.util.HashMap;
 
+import static com.gmail.tracebachi.DeltaRedis.Shared.SplitPatterns.DELTA;
+
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 11/29/15.
  */
@@ -62,10 +64,14 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
     @Override
     public void shutdown()
     {
+        plugin.debug("DeltaRedisListener.shutdown()");
+
         for(ProxiedPlayer player : BungeeCord.getInstance().getPlayers())
         {
             setPlayerAsOffline(player.getName());
         }
+
+        connection.sync().del(bungeeName + ":players");
 
         plugin = null;
         connection = null;
@@ -83,9 +89,11 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
     @EventHandler
     public void onServerConnectedEvent(ServerConnectedEvent event)
     {
-        String playerName = event.getPlayer().getName();
+        ProxiedPlayer player = event.getPlayer();
+        String playerName = player.getName();
         String serverName = event.getServer().getInfo().getName();
-        String ip = event.getPlayer().getAddress().toString();
+        String ip = player.getAddress().toString();
+
         setPlayerAsOnline(playerName, serverName, ip);
     }
 
@@ -100,6 +108,7 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
     public void onPlayerLeaveProxy(PlayerDisconnectEvent event)
     {
         String playerName = event.getPlayer().getName();
+
         setPlayerAsOffline(playerName);
     }
 
@@ -112,11 +121,16 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
     public void onDeltaRedisMessage(DeltaRedisMessageEvent event)
     {
         String channel = event.getChannel();
-        String command = event.getMessage();
+        String eventMessage = event.getMessage();
 
         if(channel.equals(DeltaRedisChannels.RUN_CMD))
         {
+            String[] splitMessage = DELTA.split(eventMessage, 2);
+            String sender = splitMessage[0];
+            String command = splitMessage[1];
+
             plugin.info("[RunCmd] {SendingServer: " + event.getSendingServer() +
+                " , Sender: " + sender +
                 " , Command: /" + command + "}");
 
             BungeeCord instance = BungeeCord.getInstance();
@@ -134,8 +148,8 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
      */
     public void setPlayerAsOnline(String playerName, String serverName, String ip)
     {
-        Preconditions.checkNotNull(playerName, "Player name cannot be null.");
-        Preconditions.checkNotNull(serverName, "Server name cannot be null.");
+        Preconditions.checkNotNull(playerName, "PlayerName cannot be null.");
+        Preconditions.checkNotNull(serverName, "ServerName cannot be null.");
         Preconditions.checkNotNull(ip, "IP cannot be null.");
 
         playerName = playerName.toLowerCase();
@@ -144,9 +158,10 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
         map.put("server", serverName);
         map.put("ip", ip);
 
+        plugin.debug("DeltaRedisListener.setPlayerAsOnline(" + playerName + ")");
+
         connection.sync().hmset(bungeeName + ":players:" + playerName, map);
         connection.sync().sadd(bungeeName + ":players", playerName);
-        plugin.debug("DeltaRedisListener.setPlayerAsOnline(" + playerName + ")");
     }
 
     /**
@@ -157,12 +172,13 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
      */
     public void setPlayerAsOffline(String playerName)
     {
-        Preconditions.checkNotNull(playerName, "Player name cannot be null.");
+        Preconditions.checkNotNull(playerName, "PlayerName cannot be null.");
 
         playerName = playerName.toLowerCase();
 
+        plugin.debug("DeltaRedisListener.setPlayerAsOffline(" + playerName + ")");
+
         connection.sync().srem(bungeeName + ":players", playerName);
         connection.sync().del(bungeeName + ":players:" + playerName);
-        plugin.debug("DeltaRedisListener.setPlayerAsOffline(" + playerName + ")");
     }
 }

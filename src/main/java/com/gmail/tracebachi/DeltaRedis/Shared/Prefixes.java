@@ -45,6 +45,6 @@ public interface Prefixes
      */
     static String input(Object object)
     {
-        return ChatColor.WHITE + (object != null ? object.toString() : "null") + ChatColor.GRAY;
+        return ChatColor.WHITE + (object != null ? object.toString() : "NULL") + ChatColor.GRAY;
     }
 }

@@ -2,30 +2,30 @@ package com.gmail.tracebachi.DeltaRedis.Bungee.Commands;
 
 import com.gmail.tracebachi.DeltaRedis.Bungee.DeltaRedis;
 import com.gmail.tracebachi.DeltaRedis.Bungee.DeltaRedisApi;
-import com.gmail.tracebachi.DeltaRedis.Shared.Prefixes;
 import com.gmail.tracebachi.DeltaRedis.Shared.Registerable;
 import com.gmail.tracebachi.DeltaRedis.Shared.Servers;
 import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.plugin.Command;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.gmail.tracebachi.DeltaRedis.Shared.Prefixes.*;
+
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 4/28/16.
  */
 public class RunCmdBungeeCommand extends Command implements Registerable, Shutdownable
 {
-    private DeltaRedisApi deltaApi;
     private DeltaRedis plugin;
 
-    public RunCmdBungeeCommand(DeltaRedisApi deltaRedisApi, DeltaRedis deltaRedis)
+    public RunCmdBungeeCommand(DeltaRedis deltaRedis)
     {
         super("runcmdbungee", null, "rcbungee");
 
-        this.deltaApi = deltaRedisApi;
         this.plugin = deltaRedis;
     }
 
@@ -45,7 +45,6 @@ public class RunCmdBungeeCommand extends Command implements Registerable, Shutdo
     public void shutdown()
     {
         unregister();
-        deltaApi = null;
         plugin = null;
     }
 
@@ -54,17 +53,18 @@ public class RunCmdBungeeCommand extends Command implements Registerable, Shutdo
     {
         if(!sender.hasPermission("DeltaRedis.RunCmd"))
         {
-            sender.sendMessage(Prefixes.FAILURE + "You do not have permission to run this command.");
+            sender.sendMessage(FAILURE + "You do not have permission to run this command.");
             return;
         }
 
         if(args.length <= 1)
         {
-            sender.sendMessage(Prefixes.INFO + "/runcmd server[,server,...] command");
-            sender.sendMessage(Prefixes.INFO + "/runcmd ALL command");
+            sender.sendMessage(INFO + "/runcmd server[,server,...] command");
+            sender.sendMessage(INFO + "/runcmd ALL command");
             return;
         }
 
+        DeltaRedisApi deltaApi = DeltaRedisApi.instance();
         Set<String> argServers = new HashSet<>(Arrays.asList(args[0].split(",")));
         Set<String> servers = deltaApi.getCachedServers();
         String commandStr = joinArgsForCommand(args);
@@ -72,8 +72,8 @@ public class RunCmdBungeeCommand extends Command implements Registerable, Shutdo
         if(doesSetContain(argServers, "ALL"))
         {
             deltaApi.sendCommandToServer(Servers.SPIGOT, commandStr);
-            sender.sendMessage(Prefixes.SUCCESS +
-                "Sent command to " + Prefixes.input("ALL"));
+
+            sendMessage(sender, SUCCESS + "Sent command to " + input("ALL"));
         }
         else
         {
@@ -81,16 +81,15 @@ public class RunCmdBungeeCommand extends Command implements Registerable, Shutdo
             {
                 String correctedDest = getMatchInSet(servers, dest);
 
-                if(correctedDest == null)
+                if(correctedDest != null)
                 {
-                    sender.sendMessage(Prefixes.FAILURE + Prefixes.input(dest) +
-                        " is offline or non-existent.");
+                    deltaApi.sendCommandToServer(correctedDest, commandStr);
+
+                    sendMessage(sender, SUCCESS + "Sent command to " + input(dest));
                 }
                 else
                 {
-                    deltaApi.sendCommandToServer(correctedDest, commandStr);
-                    sender.sendMessage(Prefixes.SUCCESS + "Sent command to " +
-                        Prefixes.input(dest));
+                    sendMessage(sender, FAILURE + input(dest) + " is offline or non-existent.");
                 }
             }
         }
@@ -98,7 +97,7 @@ public class RunCmdBungeeCommand extends Command implements Registerable, Shutdo
 
     private String joinArgsForCommand(String[] args)
     {
-        return String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+        return String.join(" ", (CharSequence[]) Arrays.copyOfRange(args, 1, args.length));
     }
 
     private boolean doesSetContain(Set<String> set, String source)
@@ -123,5 +122,10 @@ public class RunCmdBungeeCommand extends Command implements Registerable, Shutdo
             }
         }
         return null;
+    }
+
+    private void sendMessage(CommandSender receiver, String message)
+    {
+        receiver.sendMessage(TextComponent.fromLegacyText(message));
     }
 }

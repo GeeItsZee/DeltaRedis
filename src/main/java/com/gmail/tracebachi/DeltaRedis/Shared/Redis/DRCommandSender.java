@@ -55,18 +55,19 @@ public class DRCommandSender implements Shutdownable
      */
     public synchronized void setup()
     {
+        plugin.debug("DRCommandSender.setup()");
+
         connection.sync().sadd(bungeeName + ":servers", serverName);
-        plugin.debug("DRPublisher.setup()");
     }
 
     @Override
     public synchronized void shutdown()
     {
+        plugin.debug("DRCommandSender.shutdown()");
+
         connection.sync().srem(bungeeName + ":servers", serverName);
         connection.close();
         connection = null;
-
-        plugin.debug("DRPublisher.shutdown()");
         plugin = null;
     }
 
@@ -76,11 +77,13 @@ public class DRCommandSender implements Shutdownable
      */
     public synchronized Set<String> getServers()
     {
+        plugin.debug("DRCommandSender.getServers()");
+
         Set<String> result = connection.sync().smembers(bungeeName + ":servers");
-        plugin.debug("DRCommandSender.getServers() : Updated cache.");
 
         isBungeeCordOnline = result.remove(Servers.BUNGEECORD);
         cachedServers = Collections.unmodifiableSet(result);
+
         return cachedServers;
     }
 
@@ -109,10 +112,12 @@ public class DRCommandSender implements Shutdownable
      */
     public synchronized Set<String> getPlayers()
     {
+        plugin.debug("DRCommandSender.getPlayers()");
+
         Set<String> result = connection.sync().smembers(bungeeName + ":players");
-        plugin.debug("DRCommandSender.getPlayers() : Updated cache.");
 
         cachedPlayers = Collections.unmodifiableSet(result);
+
         return cachedPlayers;
     }
 
@@ -142,15 +147,15 @@ public class DRCommandSender implements Shutdownable
         plugin.debug("DRCommandSender.publish(" +
             dest + ", " + channel + ", " + message + ")");
 
-        return connection.sync().publish(
-            bungeeName + ':' + dest,
-            serverName + "/\\" + channel + "/\\" + message);
+        return connection
+            .sync()
+            .publish(
+                bungeeName + ':' + dest,
+                serverName + "/\\" + channel + "/\\" + message);
     }
 
     /**
-     * Returns a cached player from the local cache or Redis. This method
-     * does not check players that are online on the current server. The
-     * programmer must perform that check before calling this method.
+     * Returns a CachedPlayer from Redis.
      *
      * @param playerName Name of the player to find.
      *
@@ -158,28 +163,21 @@ public class DRCommandSender implements Shutdownable
      */
     public synchronized CachedPlayer getPlayer(String playerName)
     {
-        Preconditions.checkNotNull(playerName, "Player name cannot be null.");
-        playerName = playerName.toLowerCase();
+        Preconditions.checkNotNull(playerName, "PlayerName cannot be null.");
 
-        Map<String, String> result = connection.sync()
-            .hgetall(bungeeName + ":players:" + playerName);
-        plugin.debug("DRCommandSender.getPlayer()");
+        plugin.debug("DRCommandSender.getPlayer(" + playerName + ")");
 
-        if(result != null)
-        {
-            String server = result.get("server");
-            String ip = result.get("ip");
+        Map<String, String> result = connection
+            .sync()
+            .hgetall(bungeeName + ":players:" + playerName.toLowerCase());
 
-            if(server == null || ip == null)
-            {
-                return null;
-            }
+        if(result == null) { return null; }
 
-            return new CachedPlayer(server, ip);
-        }
-        else
-        {
-            return null;
-        }
+        String server = result.get("server");
+        String ip = result.get("ip");
+
+        if(server == null || ip == null) { return null; }
+
+        return new CachedPlayer(server, ip);
     }
 }

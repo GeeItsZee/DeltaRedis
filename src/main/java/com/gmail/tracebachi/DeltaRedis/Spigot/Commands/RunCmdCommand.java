@@ -16,7 +16,6 @@
  */
 package com.gmail.tracebachi.DeltaRedis.Spigot.Commands;
 
-import com.gmail.tracebachi.DeltaRedis.Shared.Prefixes;
 import com.gmail.tracebachi.DeltaRedis.Shared.Registerable;
 import com.gmail.tracebachi.DeltaRedis.Shared.Servers;
 import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
@@ -30,17 +29,17 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.gmail.tracebachi.DeltaRedis.Shared.Prefixes.*;
+
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 11/28/15.
  */
 public class RunCmdCommand implements CommandExecutor, Registerable, Shutdownable
 {
-    private DeltaRedisApi deltaApi;
     private DeltaRedis plugin;
 
-    public RunCmdCommand(DeltaRedisApi deltaApi, DeltaRedis plugin)
+    public RunCmdCommand(DeltaRedis plugin)
     {
-        this.deltaApi = deltaApi;
         this.plugin = plugin;
     }
 
@@ -60,7 +59,6 @@ public class RunCmdCommand implements CommandExecutor, Registerable, Shutdownabl
     public void shutdown()
     {
         unregister();
-        deltaApi = null;
         plugin = null;
     }
 
@@ -69,41 +67,42 @@ public class RunCmdCommand implements CommandExecutor, Registerable, Shutdownabl
     {
         if(!sender.hasPermission("DeltaRedis.RunCmd"))
         {
-            sender.sendMessage(Prefixes.FAILURE + "You do not have permission to run this command.");
+            sender.sendMessage(FAILURE + "You do not have permission to run this command.");
             return true;
         }
 
         if(args.length <= 1)
         {
-            sender.sendMessage(Prefixes.INFO + "/runcmd server[,server,...] command");
-            sender.sendMessage(Prefixes.INFO + "/runcmd ALL command");
-            sender.sendMessage(Prefixes.INFO + "/runcmd BUNGEE command");
+            sender.sendMessage(INFO + "/runcmd server[,server,...] command");
+            sender.sendMessage(INFO + "/runcmd ALL command");
+            sender.sendMessage(INFO + "/runcmd BUNGEE command");
             return true;
         }
 
+        DeltaRedisApi deltaApi = DeltaRedisApi.instance();
         Set<String> argServers = new HashSet<>(Arrays.asList(args[0].split(",")));
         Set<String> servers = deltaApi.getCachedServers();
+        String senderName = sender.getName();
         String commandStr = joinArgsForCommand(args);
 
         if(doesSetContain(argServers, "BUNGEE"))
         {
             if(deltaApi.isBungeeCordOnline())
             {
-                deltaApi.sendCommandToServer(Servers.BUNGEECORD, commandStr);
-                sender.sendMessage(Prefixes.SUCCESS +
-                    "Sent command to " + Prefixes.input(Servers.BUNGEECORD));
+                deltaApi.sendCommandToServer(Servers.BUNGEECORD, commandStr, senderName);
+
+                sender.sendMessage(SUCCESS + "Sent command to " + input("BUNGEE"));
             }
             else
             {
-                sender.sendMessage(Prefixes.FAILURE +
-                    "BungeeCord is currently down.");
+                sender.sendMessage(FAILURE + "BungeeCord is currently down.");
             }
         }
         else if(doesSetContain(argServers, "ALL"))
         {
-            deltaApi.sendCommandToServer(Servers.SPIGOT, commandStr);
-            sender.sendMessage(Prefixes.SUCCESS +
-                "Sent command to " + Prefixes.input("ALL"));
+            deltaApi.sendCommandToServer(Servers.SPIGOT, commandStr, senderName);
+
+            sender.sendMessage(SUCCESS + "Sent command to " + input("ALL"));
         }
         else
         {
@@ -111,25 +110,26 @@ public class RunCmdCommand implements CommandExecutor, Registerable, Shutdownabl
             {
                 String correctedDest = getMatchInSet(servers, dest);
 
-                if(correctedDest == null)
+                if(correctedDest != null)
                 {
-                    sender.sendMessage(Prefixes.FAILURE + Prefixes.input(dest) +
-                        " is offline or non-existent.");
+                    deltaApi.sendCommandToServer(correctedDest, commandStr, senderName);
+
+                    sender.sendMessage(SUCCESS + "Sent command to " + input(dest));
                 }
                 else
                 {
-                    deltaApi.sendCommandToServer(correctedDest, commandStr);
-                    sender.sendMessage(Prefixes.SUCCESS + "Sent command to " +
-                        Prefixes.input(dest));
+                    sender.sendMessage(FAILURE + input(dest) +
+                        " is offline or non-existent.");
                 }
             }
         }
+
         return true;
     }
 
     private String joinArgsForCommand(String[] args)
     {
-        return String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+        return String.join(" ", (CharSequence[]) Arrays.copyOfRange(args, 1, args.length));
     }
 
     private boolean doesSetContain(Set<String> set, String source)

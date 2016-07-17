@@ -20,7 +20,6 @@ import com.gmail.tracebachi.DeltaRedis.Shared.Cache.CachedPlayer;
 import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisChannels;
 import com.gmail.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
 import com.gmail.tracebachi.DeltaRedis.Shared.Servers;
-import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import com.google.common.base.Preconditions;
 import org.bukkit.Bukkit;
 
@@ -31,22 +30,43 @@ import java.util.Set;
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 12/11/15.
  */
-public class DeltaRedisApi implements Shutdownable
+public class DeltaRedisApi
 {
+    private static DeltaRedisApi instance;
+
+    public static DeltaRedisApi instance()
+    {
+        return instance;
+    }
+
     private DRCommandSender deltaSender;
     private DeltaRedis plugin;
 
-    public DeltaRedisApi(DRCommandSender deltaSender, DeltaRedis plugin)
+    /**
+     * Package-private constructor.
+     */
+    DeltaRedisApi(DRCommandSender deltaSender, DeltaRedis plugin)
     {
+        if(instance != null)
+        {
+            instance.shutdown();
+        }
+
         this.deltaSender = deltaSender;
         this.plugin = plugin;
+
+        instance = this;
     }
 
-    @Override
-    public void shutdown()
+    /**
+     * Package-private shutdown method.
+     */
+    void shutdown()
     {
         this.deltaSender = null;
         this.plugin = null;
+
+        instance = null;
     }
 
     /**
@@ -104,6 +124,8 @@ public class DeltaRedisApi implements Shutdownable
      */
     public List<String> matchStartOfPlayerName(String partial)
     {
+        Preconditions.checkNotNull(partial, "Partial was null.");
+
         List<String> result = new ArrayList<>();
         partial = partial.toLowerCase();
 
@@ -114,6 +136,7 @@ public class DeltaRedisApi implements Shutdownable
                 result.add(name);
             }
         }
+
         return result;
     }
 
@@ -125,6 +148,8 @@ public class DeltaRedisApi implements Shutdownable
      */
     public List<String> matchStartOfServerName(String partial)
     {
+        Preconditions.checkNotNull(partial, "Partial was null.");
+
         List<String> result = new ArrayList<>();
         partial = partial.toLowerCase();
 
@@ -135,6 +160,7 @@ public class DeltaRedisApi implements Shutdownable
                 result.add(name);
             }
         }
+
         return result;
     }
 
@@ -147,7 +173,7 @@ public class DeltaRedisApi implements Shutdownable
      */
     public void findPlayer(String playerName, CachedPlayerCallback callback)
     {
-        findPlayer(playerName, callback, false);
+        findPlayer(playerName, callback, true);
     }
 
     /**
@@ -156,26 +182,26 @@ public class DeltaRedisApi implements Shutdownable
      *
      * @param playerName Name of the player to find.
      * @param callback Callback to run when fetch is complete.
-     * @param isCallbackAsync True if callback should be run asynchronously.
-     *                        False if callback should be run synchronously.
+     * @param syncCallback Set to true to run callback sync else it will run async.
      */
-    public void findPlayer(String playerName, CachedPlayerCallback callback, boolean isCallbackAsync)
+    public void findPlayer(String playerName, CachedPlayerCallback callback, boolean syncCallback)
     {
-        Preconditions.checkNotNull(playerName, "Player name cannot be null.");
-        Preconditions.checkNotNull(callback, "Callback cannot be null.");
+        Preconditions.checkNotNull(playerName, "PlayerName was null.");
+        Preconditions.checkNotNull(callback, "Callback was null.");
 
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () ->
         {
             CachedPlayer cachedPlayer = deltaSender.getPlayer(playerName);
 
-            if(isCallbackAsync)
+            if(syncCallback)
             {
-                callback.call(cachedPlayer);
+                Bukkit.getScheduler().runTask(
+                    plugin,
+                    () -> callback.call(cachedPlayer));
             }
             else
             {
-                Bukkit.getScheduler().runTask(plugin,
-                    () -> callback.call(cachedPlayer));
+                callback.call(cachedPlayer);
             }
         });
     }
@@ -190,44 +216,61 @@ public class DeltaRedisApi implements Shutdownable
      */
     public void publish(String destination, String channel, String... messagePieces)
     {
-        String joinedMessage = String.join("/\\", messagePieces);
+        String joinedMessage = String.join("/\\", (CharSequence[]) messagePieces);
+
         publish(destination, channel, joinedMessage);
     }
 
     /**
      * Publishes a message to Redis.
      *
-     * @param destination Server to send message to.
+     * @param destServer Server to send message to.
      * @param channel Channel of the message.
      * @param message The actual message.
      */
-    public void publish(String destination, String channel, String message)
+    public void publish(String destServer, String channel, String message)
     {
-        Preconditions.checkNotNull(destination, "Destination cannot be null.");
-        Preconditions.checkNotNull(channel, "Channel cannot be null.");
-        Preconditions.checkNotNull(message, "Message cannot be null.");
+        Preconditions.checkNotNull(destServer, "DestServer was null.");
+        Preconditions.checkNotNull(channel, "Channel was null.");
+        Preconditions.checkNotNull(message, "Message was null.");
 
-        if(destination.equals(plugin.getServerName()))
+        if(plugin.getServerName().equals(destServer))
         {
-            throw new IllegalArgumentException("Target channel cannot be " +
-                "the same as the server's own channel.");
+            plugin.onRedisMessageEvent(destServer, channel, message);
+            return;
         }
 
-        Bukkit.getScheduler().runTaskAsynchronously(plugin,
-            () -> deltaSender.publish(destination, channel, message));
+        Bukkit.getScheduler().runTaskAsynchronously(
+            plugin,
+            () -> deltaSender.publish(
+                destServer,
+                channel,
+                message));
     }
 
     /**
      * Sends a command that will run as OP by the receiving server.
      *
-     * @param destServer Destination server name, {@link Servers#SPIGOT},
-     *                   or {@link Servers#BUNGEECORD}.
+     * @param destServer Destination server name.
      * @param command Command to send.
      */
     public void sendCommandToServer(String destServer, String command)
     {
-        Preconditions.checkNotNull(destServer, "Destination server cannot be null.");
-        Preconditions.checkNotNull(command, "Command cannot be null.");
+        sendCommandToServer(destServer, command, "UNKNOWN_PLUGIN");
+    }
+
+    /**
+     * Sends a command that will run as OP by the receiving server.
+     *
+     * @param destServer Destination server name.
+     * @param command Command to send.
+     * @param sender Name to record in the logs as having run the command.
+     */
+    public void sendCommandToServer(String destServer, String command, String sender)
+    {
+        Preconditions.checkNotNull(destServer, "DestServer was null.");
+        Preconditions.checkNotNull(command, "Command was null.");
+        Preconditions.checkNotNull(sender, "Sender was null.");
 
         if(plugin.getServerName().equals(destServer))
         {
@@ -235,44 +278,40 @@ public class DeltaRedisApi implements Shutdownable
             return;
         }
 
-        if(destServer.equals(Servers.SPIGOT))
-        {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
-
-            Bukkit.getScheduler().runTaskAsynchronously(plugin, () ->
-                deltaSender.publish(Servers.SPIGOT, DeltaRedisChannels.RUN_CMD, command));
-        }
-        else
-        {
-            Bukkit.getScheduler().runTaskAsynchronously(plugin, () ->
-                deltaSender.publish(destServer, DeltaRedisChannels.RUN_CMD, command));
-        }
+        Bukkit.getScheduler().runTaskAsynchronously(
+            plugin,
+            () -> deltaSender.publish(
+                destServer,
+                DeltaRedisChannels.RUN_CMD,
+                sender + "/\\" + command));
     }
 
     /**
      * Sends a message to a player on a different server. It fails quietly if
      * the player is not online. This method should not be used to send messages
-     * to players that are on the same server. That message will be ignored.
+     * to players that are on the same server.
      *
      * @param playerName Name of the player to try and send a message to.
      * @param message Message to send.
      */
     public void sendMessageToPlayer(String playerName, String message)
     {
-        Preconditions.checkNotNull(playerName, "Player name cannot be null.");
-        Preconditions.checkNotNull(message, "Message cannot be null.");
+        Preconditions.checkNotNull(playerName, "PlayerName was null.");
+        Preconditions.checkNotNull(message, "Message was null.");
 
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () ->
-        {
-            CachedPlayer cachedPlayer = deltaSender.getPlayer(playerName);
-
-            if(cachedPlayer != null)
+        Bukkit.getScheduler().runTaskAsynchronously(
+            plugin,
+            () ->
             {
-                deltaSender.publish(cachedPlayer.getServer(),
+                CachedPlayer cachedPlayer = deltaSender.getPlayer(playerName);
+
+                if(cachedPlayer == null) { return; }
+
+                deltaSender.publish(
+                    cachedPlayer.getServer(),
                     DeltaRedisChannels.SEND_MESSAGE,
                     playerName + "/\\" + message);
-            }
-        });
+            });
     }
 
     /**
@@ -301,30 +340,15 @@ public class DeltaRedisApi implements Shutdownable
      */
     public void sendAnnouncementToServer(String destServer, String announcement, String permission)
     {
-        Preconditions.checkNotNull(destServer, "Destination server cannot be null.");
-        Preconditions.checkNotNull(announcement, "Announcement cannot be null.");
-        Preconditions.checkNotNull(permission, "Permission cannot be null.");
+        Preconditions.checkNotNull(destServer, "DestServer was null.");
+        Preconditions.checkNotNull(announcement, "Announcement was null.");
+        Preconditions.checkNotNull(permission, "Permission was null.");
 
-        if(destServer.equals(Servers.SPIGOT))
-        {
-            if(permission.equals(""))
-            {
-                Bukkit.broadcastMessage(announcement);
-            }
-            else
-            {
-                Bukkit.broadcast(announcement, permission);
-            }
-
-            Bukkit.getScheduler().runTaskAsynchronously(plugin,
-                () -> deltaSender.publish(Servers.SPIGOT,
-                    DeltaRedisChannels.SEND_ANNOUNCEMENT, announcement + "/\\" + permission));
-        }
-        else
-        {
-            Bukkit.getScheduler().runTaskAsynchronously(plugin,
-                () -> deltaSender.publish(destServer,
-                    DeltaRedisChannels.SEND_ANNOUNCEMENT, announcement + "/\\" + permission));
-        }
+        Bukkit.getScheduler().runTaskAsynchronously(
+            plugin,
+            () -> deltaSender.publish(
+                destServer,
+                DeltaRedisChannels.SEND_ANNOUNCEMENT,
+                permission + "/\\" + announcement));
     }
 }

@@ -18,16 +18,11 @@ package com.gmail.tracebachi.DeltaRedis.Bungee;
 
 import net.md_5.bungee.api.plugin.Event;
 
-import java.util.regex.Pattern;
-
 /**
  * Created by Trace Bachi (tracebachi@gmail.com) on 10/18/15.
  */
 public class DeltaRedisMessageEvent extends Event
 {
-    public static final Pattern DELTA_PATTERN = Pattern.compile("/\\\\");
-    public static final Pattern NEWLINE_PATTERN = Pattern.compile("\\\\n");
-
     private final String sendingServer;
     private final String channel;
     private final String message;

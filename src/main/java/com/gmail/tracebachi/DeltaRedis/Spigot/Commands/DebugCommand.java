@@ -16,16 +16,14 @@
  */
 package com.gmail.tracebachi.DeltaRedis.Spigot.Commands;
 
-import com.gmail.tracebachi.DeltaRedis.Shared.Prefixes;
 import com.gmail.tracebachi.DeltaRedis.Shared.Registerable;
 import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedis;
-import com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedisApi;
-import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
+
+import static com.gmail.tracebachi.DeltaRedis.Shared.Prefixes.*;
 
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 11/28/15.
@@ -63,14 +61,14 @@ public class DebugCommand implements CommandExecutor, Registerable, Shutdownable
     {
         if(!sender.hasPermission("DeltaRedis.Debug"))
         {
-            sender.sendMessage(Prefixes.FAILURE + "You do not have the " +
-                Prefixes.input("DeltaRedis.Debug") + " permission.");
+            sender.sendMessage(FAILURE + "You do not have the " +
+                input("DeltaRedis.Debug") + " permission.");
             return true;
         }
 
         if(args.length < 1)
         {
-            sender.sendMessage(Prefixes.INFO + "/deltaredisdebug <on|off>");
+            sender.sendMessage(INFO + "/deltaredisdebug <on|off>");
             return true;
         }
 
@@ -82,6 +80,7 @@ public class DebugCommand implements CommandExecutor, Registerable, Shutdownable
         {
             plugin.setDebugEnabled(false);
         }
+
         return true;
     }
 }

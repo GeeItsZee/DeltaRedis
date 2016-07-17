@@ -29,13 +29,11 @@ public class DRPubSubListener implements RedisPubSubListener<String, String>, Sh
 {
     private static final Pattern DELTA_PATTERN = Pattern.compile("/\\\\");
 
-    private final String serverName;
     private DeltaRedisInterface plugin;
 
     public DRPubSubListener(DeltaRedisInterface plugin)
     {
         this.plugin = plugin;
-        this.serverName = plugin.getServerName();
     }
 
     @Override
@@ -49,8 +47,7 @@ public class DRPubSubListener implements RedisPubSubListener<String, String>, Sh
      * <p>
      * The received message is structured into 3 parts: serverName,
      * message channel, and the actual message. Those parts are used to
-     * call a DeltaRedisMessageEvent. If the message originated from
-     * the current server, it is ignored.
+     * create and call a DeltaRedisMessageEvent.
      * </p>
      *
      * @param channel Ignored as the listener is only registered to explicit channels.
@@ -62,19 +59,11 @@ public class DRPubSubListener implements RedisPubSubListener<String, String>, Sh
 
         if(messageParts.length == 3)
         {
-            plugin.debug("{source: " + messageParts[0] +
+            plugin.debug("Received message. {source: " + messageParts[0] +
                 " , channel: " + messageParts[1] +
                 " , message: " + messageParts[2] + "}");
 
-            // Ignore messages sent to self
-            if(!messageParts[0].equals(serverName))
-            {
-                plugin.onRedisMessageEvent(messageParts[0], messageParts[1], messageParts[2]);
-            }
-            else
-            {
-                plugin.debug("Ignored message received from self.");
-            }
+            plugin.onRedisMessageEvent(messageParts[0], messageParts[1], messageParts[2]);
         }
         else
         {
@@ -89,7 +78,7 @@ public class DRPubSubListener implements RedisPubSubListener<String, String>, Sh
      */
     public void subscribed(String channel, long count)
     {
-        plugin.debug("Subscribed to {channel: " + channel + "}");
+        plugin.debug("Listener subscribed to {channel: " + channel + "}");
     }
 
     /**
@@ -98,21 +87,12 @@ public class DRPubSubListener implements RedisPubSubListener<String, String>, Sh
      */
     public void unsubscribed(String channel, long count)
     {
-        plugin.debug("No longer subscribed to {channel: " + channel + "}");
+        plugin.debug("Listener unsubscribed from {channel: " + channel + "}");
     }
 
-    public void message(String pattern, String channel, String message)
-    {
+    public void message(String pattern, String channel, String message) {}
 
-    }
+    public void psubscribed(String pattern, long count) {}
 
-    public void psubscribed(String pattern, long count)
-    {
-
-    }
-
-    public void punsubscribed(String pattern, long count)
-    {
-
-    }
+    public void punsubscribed(String pattern, long count) {}
 }

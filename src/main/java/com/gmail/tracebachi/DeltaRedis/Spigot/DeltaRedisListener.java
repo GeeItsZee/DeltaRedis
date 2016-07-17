@@ -25,8 +25,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 
-import static com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedisMessageEvent.DELTA_PATTERN;
-import static com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedisMessageEvent.NEWLINE_PATTERN;
+import static com.gmail.tracebachi.DeltaRedis.Shared.SplitPatterns.DELTA;
+import static com.gmail.tracebachi.DeltaRedis.Shared.SplitPatterns.NEWLINE;
 
 /**
  * Created by Trace Bachi (tracebachi@gmail.com) on 10/18/15.
@@ -67,16 +67,21 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
 
         if(channel.equals(DeltaRedisChannels.RUN_CMD))
         {
+            String[] splitMessage = DELTA.split(eventMessage, 2);
+            String sender = splitMessage[0];
+            String command = splitMessage[1];
+
             plugin.info("[RunCmd] {SendingServer: " + event.getSendingServer() +
-                " , Command: /" + eventMessage + "}");
+                " , Sender: " + sender +
+                " , Command: /" + command + "}");
 
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), eventMessage);
         }
         else if(channel.equals(DeltaRedisChannels.SEND_ANNOUNCEMENT))
         {
-            String[] splitMessage = DELTA_PATTERN.split(eventMessage, -1);
-            String[] lines = NEWLINE_PATTERN.split(splitMessage[0]);
-            String permission = splitMessage[1];
+            String[] splitMessage = DELTA.split(eventMessage, 2);
+            String permission = splitMessage[0];
+            String[] lines = NEWLINE.split(splitMessage[1]);
 
             if(permission.equals(""))
             {
@@ -95,9 +100,9 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
         }
         else if(channel.equals(DeltaRedisChannels.SEND_MESSAGE))
         {
-            String[] receiverAndMessage = DELTA_PATTERN.split(eventMessage, 2);
-            String receiverName = receiverAndMessage[0];
-            String[] lines = NEWLINE_PATTERN.split(receiverAndMessage[1]);
+            String[] splitMessage = DELTA.split(eventMessage, 2);
+            String receiverName = splitMessage[0];
+            String[] lines = NEWLINE.split(splitMessage[1]);
 
             if(receiverName.equalsIgnoreCase("console"))
             {
@@ -110,7 +115,7 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
             {
                 Player receiver = Bukkit.getPlayer(receiverName);
 
-                if(receiver != null && receiver.isOnline())
+                if(receiver != null)
                 {
                     for(String line : lines)
                     {

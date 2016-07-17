@@ -102,7 +102,7 @@ public class DeltaRedis extends Plugin implements DeltaRedisInterface
         mainListener = new DeltaRedisListener(commandConn, this);
         mainListener.register();
 
-        runCmdBungeeCommand = new RunCmdBungeeCommand(deltaRedisApi, this);
+        runCmdBungeeCommand = new RunCmdBungeeCommand(this);
         runCmdBungeeCommand.register();
 
         getProxy().getScheduler().schedule(this, () ->
@@ -147,11 +147,6 @@ public class DeltaRedis extends Plugin implements DeltaRedisInterface
         resources = null;
 
         debugEnabled = false;
-    }
-
-    public DeltaRedisApi getDeltaRedisApi()
-    {
-        return deltaRedisApi;
     }
 
     @Override

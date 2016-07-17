@@ -20,7 +20,6 @@ import com.gmail.tracebachi.DeltaRedis.Shared.Cache.CachedPlayer;
 import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisChannels;
 import com.gmail.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
 import com.gmail.tracebachi.DeltaRedis.Shared.Servers;
-import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import com.google.common.base.Preconditions;
 import net.md_5.bungee.BungeeCord;
 
@@ -29,22 +28,43 @@ import java.util.Set;
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 12/11/15.
  */
-public class DeltaRedisApi implements Shutdownable
+public class DeltaRedisApi
 {
+    private static DeltaRedisApi instance;
+
+    public static DeltaRedisApi instance()
+    {
+        return instance;
+    }
+
     private DRCommandSender deltaSender;
     private DeltaRedis plugin;
 
-    public DeltaRedisApi(DRCommandSender deltaSender, DeltaRedis plugin)
+    /**
+     * Package-private constructor.
+     */
+    DeltaRedisApi(DRCommandSender deltaSender, DeltaRedis plugin)
     {
+        if(instance != null)
+        {
+            instance.shutdown();
+        }
+
         this.deltaSender = deltaSender;
         this.plugin = plugin;
+
+        instance = this;
     }
 
-    @Override
-    public void shutdown()
+    /**
+     * Package-private shutdown method.
+     */
+    void shutdown()
     {
         this.deltaSender = null;
         this.plugin = null;
+
+        instance = null;
     }
 
     /**
@@ -104,7 +124,8 @@ public class DeltaRedisApi implements Shutdownable
      */
     public void publish(String destination, String channel, String... messagePieces)
     {
-        String joinedMessage = String.join("/\\", messagePieces);
+        String joinedMessage = String.join("/\\", (CharSequence[]) messagePieces);
+
         publish(destination, channel, joinedMessage);
     }
 
@@ -117,18 +138,33 @@ public class DeltaRedisApi implements Shutdownable
      */
     public void publish(String destination, String channel, String message)
     {
-        Preconditions.checkNotNull(destination, "Destination cannot be null.");
-        Preconditions.checkNotNull(channel, "Channel cannot be null.");
-        Preconditions.checkNotNull(message, "Message cannot be null.");
+        Preconditions.checkNotNull(destination, "DestServer was null.");
+        Preconditions.checkNotNull(channel, "Channel was null.");
+        Preconditions.checkNotNull(message, "Message was null.");
 
-        if(destination.equals(plugin.getServerName()))
+        if(plugin.getServerName().equals(destination))
         {
-            throw new IllegalArgumentException("Target channel cannot be " +
-                "the same as the server's own channel.");
+            plugin.onRedisMessageEvent(destination, channel, message);
+            return;
         }
 
         BungeeCord.getInstance().getScheduler().runAsync(plugin,
-            () -> deltaSender.publish(destination, channel, message));
+            () -> deltaSender.publish(
+                destination,
+                channel,
+                message));
+    }
+
+    /**
+     * Sends a command that will run as OP by the receiving server.
+     *
+     * @param destServer Destination server name, {@link Servers#SPIGOT},
+     *                   or {@link Servers#BUNGEECORD}.
+     * @param command Command to send.
+     */
+    public void sendCommandToServer(String destServer, String command)
+    {
+        sendCommandToServer(destServer, command, "UNKNOWN_PLUGIN");
     }
 
     /**
@@ -136,23 +172,27 @@ public class DeltaRedisApi implements Shutdownable
      *
      * @param destServer Destination server name or {@link Servers#SPIGOT}.
      * @param command Command to send.
+     * @param sender Name to record in the logs as having run the command.
      */
-    public void sendCommandToServer(String destServer, String command)
+    public void sendCommandToServer(String destServer, String command, String sender)
     {
-        Preconditions.checkNotNull(destServer, "Destination server cannot be null.");
-        Preconditions.checkNotNull(command, "Command cannot be null.");
-        Preconditions.checkArgument(!destServer.equals(Servers.BUNGEECORD), "Destination server cannot be BungeeCord.");
+        Preconditions.checkNotNull(destServer, "DestServer was null.");
+        Preconditions.checkNotNull(command, "Command was null.");
+        Preconditions.checkNotNull(sender, "Sender was null.");
 
-        if(destServer.equals(Servers.SPIGOT))
+        if(plugin.getServerName().equals(destServer))
         {
-            BungeeCord.getInstance().getScheduler().runAsync(plugin, () ->
-                deltaSender.publish(Servers.SPIGOT, DeltaRedisChannels.RUN_CMD, command));
+            BungeeCord instance = BungeeCord.getInstance();
+            instance.getPluginManager().dispatchCommand(instance.getConsole(), command);
+            return;
         }
-        else
-        {
-            BungeeCord.getInstance().getScheduler().runAsync(plugin, () ->
-                deltaSender.publish(destServer, DeltaRedisChannels.RUN_CMD, command));
-        }
+
+        BungeeCord.getInstance().getScheduler().runAsync(
+            plugin,
+            () -> deltaSender.publish(
+                destServer,
+                DeltaRedisChannels.RUN_CMD,
+                sender + "/\\" + command));
     }
 
     /**
@@ -165,20 +205,22 @@ public class DeltaRedisApi implements Shutdownable
      */
     public void sendMessageToPlayer(String playerName, String message)
     {
-        Preconditions.checkNotNull(playerName, "Player name cannot be null.");
-        Preconditions.checkNotNull(message, "Message cannot be null.");
+        Preconditions.checkNotNull(playerName, "PlayerName was null.");
+        Preconditions.checkNotNull(message, "Message was null.");
 
-        BungeeCord.getInstance().getScheduler().runAsync(plugin, () ->
-        {
-            CachedPlayer cachedPlayer = deltaSender.getPlayer(playerName);
-
-            if(cachedPlayer != null)
+        BungeeCord.getInstance().getScheduler().runAsync(
+            plugin,
+            () ->
             {
-                deltaSender.publish(cachedPlayer.getServer(),
+                CachedPlayer cachedPlayer = deltaSender.getPlayer(playerName);
+
+                if(cachedPlayer == null) { return; }
+
+                deltaSender.publish(
+                    cachedPlayer.getServer(),
                     DeltaRedisChannels.SEND_MESSAGE,
                     playerName + "/\\" + message);
-            }
-        });
+            });
     }
 
     /**
@@ -192,13 +234,16 @@ public class DeltaRedisApi implements Shutdownable
      */
     public void sendMessageToPlayer(String server, String playerName, String message)
     {
-        Preconditions.checkNotNull(playerName, "Player name cannot be null.");
-        Preconditions.checkNotNull(message, "Message cannot be null.");
-        Preconditions.checkArgument(!server.equals(Servers.BUNGEECORD),
-            "Server cannot be BungeeCord.");
+        Preconditions.checkNotNull(playerName, "PlayerName was null.");
+        Preconditions.checkNotNull(message, "Message was null.");
+        Preconditions.checkArgument(
+            !server.equals(Servers.BUNGEECORD),
+            "Server was BUNGEECORD.");
 
-        BungeeCord.getInstance().getScheduler().runAsync(plugin,
-            () -> deltaSender.publish(server,
+        BungeeCord.getInstance().getScheduler().runAsync(
+            plugin,
+            () -> deltaSender.publish(
+                server,
                 DeltaRedisChannels.SEND_MESSAGE,
                 playerName + "/\\" + message));
     }
@@ -226,12 +271,15 @@ public class DeltaRedisApi implements Shutdownable
      */
     public void sendAnnouncementToServer(String destServer, String announcement, String permission)
     {
-        Preconditions.checkNotNull(destServer, "Destination server cannot be null.");
-        Preconditions.checkNotNull(announcement, "Announcement cannot be null.");
-        Preconditions.checkNotNull(permission, "Permission cannot be null");
+        Preconditions.checkNotNull(destServer, "DestServer was null.");
+        Preconditions.checkNotNull(announcement, "Announcement was null.");
+        Preconditions.checkNotNull(permission, "Permission was null.");
 
-        BungeeCord.getInstance().getScheduler().runAsync(plugin,
-            () -> deltaSender.publish(destServer,
-                DeltaRedisChannels.SEND_ANNOUNCEMENT, announcement + "/\\" + permission));
+        BungeeCord.getInstance().getScheduler().runAsync(
+            plugin,
+            () -> deltaSender.publish(
+                destServer,
+                DeltaRedisChannels.SEND_ANNOUNCEMENT,
+                permission + "/\\" + announcement));
     }
 }

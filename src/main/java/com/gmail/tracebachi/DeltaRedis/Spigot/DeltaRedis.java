@@ -22,7 +22,6 @@ import com.gmail.tracebachi.DeltaRedis.Shared.Redis.DRPubSubListener;
 import com.gmail.tracebachi.DeltaRedis.Shared.Servers;
 import com.gmail.tracebachi.DeltaRedis.Spigot.Commands.DebugCommand;
 import com.gmail.tracebachi.DeltaRedis.Spigot.Commands.IsOnlineCommand;
-import com.gmail.tracebachi.DeltaRedis.Spigot.Commands.ListAllCommand;
 import com.gmail.tracebachi.DeltaRedis.Spigot.Commands.RunCmdCommand;
 import com.google.common.base.Preconditions;
 import com.lambdaworks.redis.ClientOptions;
@@ -43,7 +42,6 @@ public class DeltaRedis extends JavaPlugin implements DeltaRedisInterface
     private DeltaRedisListener mainListener;
     private DebugCommand debugCommand;
     private IsOnlineCommand isOnlineCommand;
-    private ListAllCommand listAllCommand;
     private RunCmdCommand runCmdCommand;
 
     private ClientResources resources;
@@ -106,31 +104,30 @@ public class DeltaRedis extends JavaPlugin implements DeltaRedisInterface
         debugCommand = new DebugCommand(this);
         debugCommand.register();
 
-        isOnlineCommand = new IsOnlineCommand(deltaRedisApi, this);
+        isOnlineCommand = new IsOnlineCommand(this);
         isOnlineCommand.register();
 
-        listAllCommand = new ListAllCommand(deltaRedisApi, this);
-        listAllCommand.register();
-
-        runCmdCommand = new RunCmdCommand(deltaRedisApi, this);
+        runCmdCommand = new RunCmdCommand(this);
         runCmdCommand.register();
 
         int updatePeriod = getConfig().getInt("OnlineUpdatePeriod", 300);
 
-        getServer().getScheduler().runTaskTimerAsynchronously(this, () ->
-        {
-            commandSender.getServers();
-            commandSender.getPlayers();
-        }, 20, updatePeriod);
+        getServer().getScheduler().runTaskTimerAsynchronously(
+            this,
+            () ->
+            {
+                if(commandSender != null)
+                {
+                    commandSender.getServers();
+                    commandSender.getPlayers();
+                }
+            }, 20, updatePeriod);
     }
 
     @Override
     public void onDisable()
     {
         getServer().getScheduler().cancelTasks(this);
-
-        listAllCommand.shutdown();
-        listAllCommand = null;
 
         runCmdCommand.shutdown();
         runCmdCommand = null;
@@ -167,11 +164,6 @@ public class DeltaRedis extends JavaPlugin implements DeltaRedisInterface
         resources = null;
     }
 
-    public DeltaRedisApi getDeltaRedisApi()
-    {
-        return deltaRedisApi;
-    }
-
     public boolean isDebugEnabled()
     {
         return debugEnabled;
@@ -187,7 +179,8 @@ public class DeltaRedis extends JavaPlugin implements DeltaRedisInterface
     {
         DeltaRedisMessageEvent event = new DeltaRedisMessageEvent(source, channel, message);
 
-        getServer().getScheduler().runTask(this,
+        getServer().getScheduler().runTask(
+            this,
             () -> getServer().getPluginManager().callEvent(event));
     }
 
