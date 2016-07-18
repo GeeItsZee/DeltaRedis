@@ -148,7 +148,8 @@ public class DeltaRedisApi
             return;
         }
 
-        BungeeCord.getInstance().getScheduler().runAsync(plugin,
+        BungeeCord.getInstance().getScheduler().runAsync(
+            plugin,
             () -> deltaSender.publish(
                 destination,
                 channel,

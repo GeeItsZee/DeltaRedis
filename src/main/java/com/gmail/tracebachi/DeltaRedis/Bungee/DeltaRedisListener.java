@@ -29,6 +29,7 @@ import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 import static com.gmail.tracebachi.DeltaRedis.Shared.SplitPatterns.DELTA;
 
@@ -39,6 +40,7 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
 {
     private final String bungeeName;
     private StatefulRedisConnection<String, String> connection;
+    private HashSet<String> onlinePlayers = new HashSet<>(64);
     private DeltaRedis plugin;
 
     public DeltaRedisListener(StatefulRedisConnection<String, String> connection,
@@ -66,12 +68,24 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
     {
         plugin.debug("DeltaRedisListener.shutdown()");
 
+        // Remove all players currently online from Redis
         for(ProxiedPlayer player : BungeeCord.getInstance().getPlayers())
         {
             setPlayerAsOffline(player.getName());
         }
 
+        // Clear the Redis set of online players
         connection.sync().del(bungeeName + ":players");
+
+        // Handle the case where PlayerDisconnectEvent may not have been called
+        // to flush data for players that are no longer online
+        for(String name : onlinePlayers)
+        {
+            connection.sync().del(bungeeName + ":players:" + name);
+        }
+
+        onlinePlayers.clear();
+        onlinePlayers = null;
 
         plugin = null;
         connection = null;
@@ -162,6 +176,8 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
 
         connection.sync().hmset(bungeeName + ":players:" + playerName, map);
         connection.sync().sadd(bungeeName + ":players", playerName);
+
+        onlinePlayers.add(playerName);
     }
 
     /**
@@ -180,5 +196,7 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
 
         connection.sync().srem(bungeeName + ":players", playerName);
         connection.sync().del(bungeeName + ":players:" + playerName);
+
+        onlinePlayers.remove(playerName);
     }
 }
