@@ -103,7 +103,7 @@ public class IsOnlineCommand implements CommandExecutor, Registerable, Shutdowna
         }
         else
         {
-            Player player = Bukkit.getPlayer(name);
+            Player player = Bukkit.getPlayerExact(name);
             player.sendMessage(message);
         }
     }

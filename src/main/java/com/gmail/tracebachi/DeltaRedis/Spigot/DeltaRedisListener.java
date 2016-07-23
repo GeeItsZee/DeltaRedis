@@ -113,7 +113,7 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
             }
             else
             {
-                Player receiver = Bukkit.getPlayer(receiverName);
+                Player receiver = Bukkit.getPlayerExact(receiverName);
 
                 if(receiver != null)
                 {

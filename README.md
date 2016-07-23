@@ -29,7 +29,7 @@ public void sendHelloToZee() {
 @EventHandler
 public void onMessage(DeltaRedisMessageEvent event) {
   if(event.getChannel().equals("Talk")) {
-    Player player = Bukkit.getPlayer("Zee");
+    Player player = Bukkit.getPlayerExact("Zee");
     
     if(player != null) {
         player.sendMessage(event.getMessage());
