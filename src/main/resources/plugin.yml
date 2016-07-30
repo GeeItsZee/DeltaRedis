@@ -1,6 +1,6 @@
 name: DeltaRedis
 main: com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedis
-version: 2.0
+version: ${project.version}
 author: Trace Bachi (tracebachi@gmail.com, BigBossZee)
 commands:
   deltaredisdebug:
