@@ -16,6 +16,7 @@
  */
 package com.gmail.tracebachi.DeltaRedis.Bungee;
 
+import com.google.common.base.Preconditions;
 import net.md_5.bungee.api.plugin.Event;
 
 /**
@@ -29,9 +30,9 @@ public class DeltaRedisMessageEvent extends Event
 
     public DeltaRedisMessageEvent(String sendingServer, String channel, String message)
     {
-        this.sendingServer = sendingServer;
-        this.channel = channel;
-        this.message = message;
+        this.sendingServer = Preconditions.checkNotNull(sendingServer, "Sending Server was null.");
+        this.channel = Preconditions.checkNotNull(channel, "Channel was null.");
+        this.message = Preconditions.checkNotNull(message, "Message was null.");
     }
 
     /**

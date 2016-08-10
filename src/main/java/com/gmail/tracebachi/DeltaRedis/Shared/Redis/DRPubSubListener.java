@@ -18,6 +18,7 @@ package com.gmail.tracebachi.DeltaRedis.Shared.Redis;
 
 import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisInterface;
 import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
+import com.gmail.tracebachi.DeltaRedis.Shared.SplitPatterns;
 import com.lambdaworks.redis.pubsub.RedisPubSubListener;
 
 import java.util.regex.Pattern;
@@ -27,8 +28,6 @@ import java.util.regex.Pattern;
  */
 public class DRPubSubListener implements RedisPubSubListener<String, String>, Shutdownable
 {
-    private static final Pattern DELTA_PATTERN = Pattern.compile("/\\\\");
-
     private DeltaRedisInterface plugin;
 
     public DRPubSubListener(DeltaRedisInterface plugin)
@@ -55,7 +54,7 @@ public class DRPubSubListener implements RedisPubSubListener<String, String>, Sh
      */
     public void message(String channel, String completeMessage)
     {
-        String[] messageParts = DELTA_PATTERN.split(completeMessage, 3);
+        String[] messageParts = SplitPatterns.DELTA.split(completeMessage, 3);
 
         if(messageParts.length == 3)
         {

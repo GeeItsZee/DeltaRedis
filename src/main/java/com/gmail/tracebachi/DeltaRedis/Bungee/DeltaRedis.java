@@ -153,6 +153,7 @@ public class DeltaRedis extends Plugin implements DeltaRedisInterface
     public void onRedisMessageEvent(String source, String channel, String message)
     {
         DeltaRedisMessageEvent event = new DeltaRedisMessageEvent(source, channel, message);
+
         getProxy().getPluginManager().callEvent(event);
     }
 

@@ -16,6 +16,7 @@
  */
 package com.gmail.tracebachi.DeltaRedis.Spigot;
 
+import com.google.common.base.Preconditions;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
@@ -32,9 +33,9 @@ public class DeltaRedisMessageEvent extends Event
 
     public DeltaRedisMessageEvent(String sendingServer, String channel, String message)
     {
-        this.sendingServer = sendingServer;
-        this.channel = channel;
-        this.message = message;
+        this.sendingServer = Preconditions.checkNotNull(sendingServer, "Sending Server was null.");
+        this.channel = Preconditions.checkNotNull(channel, "Channel was null.");
+        this.message = Preconditions.checkNotNull(message, "Message was null.");
     }
 
     /**
@@ -59,6 +60,14 @@ public class DeltaRedisMessageEvent extends Event
     public String getMessage()
     {
         return message;
+    }
+
+    /**
+     * @return True if the message was sent by the current server. False otherwise.
+     */
+    public boolean isSendingServerSelf()
+    {
+        return DeltaRedisApi.instance().getServerName().equals(sendingServer);
     }
 
     /**
