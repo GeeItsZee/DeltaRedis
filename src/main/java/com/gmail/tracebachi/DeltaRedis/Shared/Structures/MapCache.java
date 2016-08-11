@@ -58,7 +58,7 @@ public class MapCache<K, V extends Cacheable>
             long timeDiff = currentTime - value.getTimeCreatedAt();
             return (timeDiff < invalidValueTime) ? value : null;
         }
-        else return null;
+        else { return null; }
     }
 
     public synchronized V remove(K key)
@@ -76,11 +76,11 @@ public class MapCache<K, V extends Cacheable>
     public synchronized void cleanup()
     {
         long currentTime = System.currentTimeMillis();
-        Iterator<Map.Entry<K,V>> iter = map.entrySet().iterator();
+        Iterator<Map.Entry<K, V>> iter = map.entrySet().iterator();
 
         while(iter.hasNext())
         {
-            Map.Entry<K,V> entry = iter.next();
+            Map.Entry<K, V> entry = iter.next();
             long timeDiff = currentTime - entry.getValue().getTimeCreatedAt();
             if(timeDiff >= invalidValueTime)
             {

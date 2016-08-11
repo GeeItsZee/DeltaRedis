@@ -21,8 +21,6 @@ import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import com.gmail.tracebachi.DeltaRedis.Shared.SplitPatterns;
 import com.lambdaworks.redis.pubsub.RedisPubSubListener;
 
-import java.util.regex.Pattern;
-
 /**
  * Created by Trace Bachi (tracebachi@gmail.com) on 10/18/15.
  */
@@ -49,7 +47,7 @@ public class DRPubSubListener implements RedisPubSubListener<String, String>, Sh
      * create and call a DeltaRedisMessageEvent.
      * </p>
      *
-     * @param channel Ignored as the listener is only registered to explicit channels.
+     * @param channel         Ignored as the listener is only registered to explicit channels.
      * @param completeMessage Complete received message.
      */
     public void message(String channel, String completeMessage)
@@ -73,7 +71,7 @@ public class DRPubSubListener implements RedisPubSubListener<String, String>, Sh
 
     /**
      * @param channel Channel that the listener was registered to.
-     * @param count Number of other listeners (on that Redis instance) on the channel.
+     * @param count   Number of other listeners (on that Redis instance) on the channel.
      */
     public void subscribed(String channel, long count)
     {
@@ -82,7 +80,7 @@ public class DRPubSubListener implements RedisPubSubListener<String, String>, Sh
 
     /**
      * @param channel Channel that the listener was unregistered from.
-     * @param count Number of other listeners (on that Redis instance) on the channel.
+     * @param count   Number of other listeners (on that Redis instance) on the channel.
      */
     public void unsubscribed(String channel, long count)
     {

@@ -76,9 +76,13 @@ public class DebugCommand implements CommandExecutor, Registerable, Shutdownable
         {
             plugin.setDebugEnabled(true);
         }
+        else if(args[0].equalsIgnoreCase("off"))
+        {
+            plugin.setDebugEnabled(true);
+        }
         else
         {
-            plugin.setDebugEnabled(false);
+            sender.sendMessage(INFO + "/deltaredisdebug <on|off>");
         }
 
         return true;

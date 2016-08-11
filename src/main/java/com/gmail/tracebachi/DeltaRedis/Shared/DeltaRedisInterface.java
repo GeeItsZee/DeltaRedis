@@ -24,7 +24,7 @@ public interface DeltaRedisInterface
     /**
      * Handles a DeltaRedis message to the server.
      *
-     * @param source Server that sent the message.
+     * @param source  Server that sent the message.
      * @param channel Custom channel that the message should be delivered to.
      * @param message Message to deliver.
      */

@@ -118,8 +118,8 @@ public class DeltaRedisApi
      * Publishes a message built from string message pieces joined by
      * the "/\" (forward-slash, back-slash) to Redis.
      *
-     * @param destination Server to send message to.
-     * @param channel Channel of the message.
+     * @param destination   Server to send message to.
+     * @param channel       Channel of the message.
      * @param messagePieces The parts of the message.
      */
     public void publish(String destination, String channel, String... messagePieces)
@@ -133,8 +133,8 @@ public class DeltaRedisApi
      * Publishes a message to Redis.
      *
      * @param destination Server to send message to.
-     * @param channel Channel of the message.
-     * @param message The actual message.
+     * @param channel     Channel of the message.
+     * @param message     The actual message.
      */
     public void publish(String destination, String channel, String message)
     {
@@ -161,7 +161,7 @@ public class DeltaRedisApi
      *
      * @param destServer Destination server name, {@link Servers#SPIGOT},
      *                   or {@link Servers#BUNGEECORD}.
-     * @param command Command to send.
+     * @param command    Command to send.
      */
     public void sendCommandToServer(String destServer, String command)
     {
@@ -172,8 +172,8 @@ public class DeltaRedisApi
      * Sends a command that will run as OP by the receiving server.
      *
      * @param destServer Destination server name or {@link Servers#SPIGOT}.
-     * @param command Command to send.
-     * @param sender Name to record in the logs as having run the command.
+     * @param command    Command to send.
+     * @param sender     Name to record in the logs as having run the command.
      */
     public void sendCommandToServer(String destServer, String command, String sender)
     {
@@ -202,7 +202,7 @@ public class DeltaRedisApi
      * reaches the server or if not player is online by the specified name.
      *
      * @param playerName Name of the player to send message to.
-     * @param message Message to send.
+     * @param message    Message to send.
      */
     public void sendMessageToPlayer(String playerName, String message)
     {
@@ -229,17 +229,15 @@ public class DeltaRedisApi
      * reach the player if they have logged off by the time the message
      * reaches the server.
      *
-     * @param server Name of the server to send the message to.
+     * @param server     Name of the server to send the message to.
      * @param playerName Name of the player to send message to.
-     * @param message Message to send.
+     * @param message    Message to send.
      */
     public void sendMessageToPlayer(String server, String playerName, String message)
     {
         Preconditions.checkNotNull(playerName, "PlayerName was null.");
         Preconditions.checkNotNull(message, "Message was null.");
-        Preconditions.checkArgument(
-            !server.equals(Servers.BUNGEECORD),
-            "Server was BUNGEECORD.");
+        Preconditions.checkArgument(!server.equals(Servers.BUNGEECORD), "Server was BUNGEECORD.");
 
         BungeeCord.getInstance().getScheduler().runAsync(
             plugin,
@@ -252,7 +250,7 @@ public class DeltaRedisApi
     /**
      * Sends an announcement to all players on a server.
      *
-     * @param destServer Destination server name or {@link Servers#SPIGOT}.
+     * @param destServer   Destination server name or {@link Servers#SPIGOT}.
      * @param announcement Announcement to send.
      */
     public void sendAnnouncementToServer(String destServer, String announcement)
@@ -264,11 +262,11 @@ public class DeltaRedisApi
      * Sends an announcement to all players on a server with a specific
      * permission.
      *
-     * @param destServer Destination server name or {@link Servers#SPIGOT}.
+     * @param destServer   Destination server name or {@link Servers#SPIGOT}.
      * @param announcement Announcement to send.
-     * @param permission Permission that a player must have to receive the
-     *                   announcement. The empty string, "", can be used to
-     *                   signal that a permission is not required.
+     * @param permission   Permission that a player must have to receive the
+     *                     announcement. The empty string, "", can be used to
+     *                     signal that a permission is not required.
      */
     public void sendAnnouncementToServer(String destServer, String announcement, String permission)
     {

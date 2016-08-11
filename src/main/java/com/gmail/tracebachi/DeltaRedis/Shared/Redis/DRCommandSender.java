@@ -42,7 +42,7 @@ public class DRCommandSender implements Shutdownable
     private Set<String> cachedPlayers;
 
     public DRCommandSender(StatefulRedisConnection<String, String> connection,
-        DeltaRedisInterface plugin)
+                           DeltaRedisInterface plugin)
     {
         this.connection = connection;
         this.plugin = plugin;
@@ -136,29 +136,24 @@ public class DRCommandSender implements Shutdownable
      * also be one of the special values {@link Servers#BUNGEECORD}
      * or {@link Servers#SPIGOT}.
      *
-     * @param dest Server name that message should go to.
+     * @param dest    Server name that message should go to.
      * @param channel Custom channel name for the message.
      * @param message Message to send.
-     *
      * @return The number of servers that received the message.
      */
     public synchronized long publish(String dest, String channel, String message)
     {
-        plugin.debug("DRCommandSender.publish(" +
-            dest + ", " + channel + ", " + message + ")");
+        plugin.debug("DRCommandSender.publish(" + dest + ", " + channel + ", " + message + ")");
 
-        return connection
-            .sync()
-            .publish(
-                bungeeName + ':' + dest,
-                serverName + "/\\" + channel + "/\\" + message);
+        return connection.sync().publish(
+            bungeeName + ':' + dest,
+            serverName + "/\\" + channel + "/\\" + message);
     }
 
     /**
      * Returns a CachedPlayer from Redis.
      *
      * @param playerName Name of the player to find.
-     *
      * @return CachedPlayer if found and null if not.
      */
     public synchronized CachedPlayer getPlayer(String playerName)
@@ -167,9 +162,8 @@ public class DRCommandSender implements Shutdownable
 
         plugin.debug("DRCommandSender.getPlayer(" + playerName + ")");
 
-        Map<String, String> result = connection
-            .sync()
-            .hgetall(bungeeName + ":players:" + playerName.toLowerCase());
+        Map<String, String> result = connection.sync().hgetall(
+            bungeeName + ":players:" + playerName.toLowerCase());
 
         if(result == null) { return null; }
 

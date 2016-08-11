@@ -74,7 +74,8 @@ public class DeltaRedis extends Plugin implements DeltaRedisInterface
         if(config == null) { return; }
         debugEnabled = config.getBoolean("DebugMode", false);
 
-        Preconditions.checkArgument(config.get("BungeeName") != null,
+        Preconditions.checkArgument(
+            config.get("BungeeName") != null,
             "BungeeName not specified.");
 
         ClientOptions.Builder optionBuilder = new ClientOptions.Builder();

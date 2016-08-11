@@ -39,7 +39,6 @@ public interface Prefixes
      * </p>
      *
      * @param object Object to call {@link Object#toString()} on.
-     *
      * @return A string representation of the object colored in
      * white, but a gray color appended.
      */

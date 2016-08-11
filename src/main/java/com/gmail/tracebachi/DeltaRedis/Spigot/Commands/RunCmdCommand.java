@@ -118,8 +118,7 @@ public class RunCmdCommand implements CommandExecutor, Registerable, Shutdownabl
                 }
                 else
                 {
-                    sender.sendMessage(FAILURE + input(dest) +
-                        " is offline or non-existent.");
+                    sender.sendMessage(FAILURE + input(dest) + " is offline or non-existent.");
                 }
             }
         }

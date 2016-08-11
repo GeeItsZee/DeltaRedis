@@ -30,10 +30,9 @@ public interface ConfigUtil
      * Loads the resource from the JAR and saves it to the destination under the plugin's
      * data folder. By default, the destination file will not be replaced if it exists.
      *
-     * @param plugin Plugin that contains the resource in it's JAR.
-     * @param resourceName Filename of the resource.
+     * @param plugin          Plugin that contains the resource in it's JAR.
+     * @param resourceName    Filename of the resource.
      * @param destinationName Filename of the destination.
-     *
      * @return Destination File.
      */
     static File saveResource(Plugin plugin, String resourceName, String destinationName)
@@ -47,15 +46,18 @@ public interface ConfigUtil
      * <p>
      * Originally authored by: vemacs, Feb 15, 2014
      */
-    static File saveResource(Plugin plugin, String resourceName, String destinationName, boolean replace)
+    static File saveResource(Plugin plugin, String resourceName, String destinationName,
+                             boolean replace)
     {
         File folder = plugin.getDataFolder();
+
         if(!folder.exists() && !folder.mkdir())
         {
             return null;
         }
 
         File destinationFile = new File(folder, destinationName);
+
         try
         {
             if(!destinationFile.exists() || replace)
@@ -70,6 +72,7 @@ public interface ConfigUtil
                 }
                 else { return null; }
             }
+
             return destinationFile;
         }
         catch(IOException e)

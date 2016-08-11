@@ -87,8 +87,7 @@ public class IsOnlineCommand implements CommandExecutor, Registerable, Shutdowna
             }
             else
             {
-                sendMessage(senderName, INFO + input(nameToFind) +
-                    " is " + input("offline"));
+                sendMessage(senderName, INFO + input(nameToFind) + " is " + input("offline"));
             }
         });
 

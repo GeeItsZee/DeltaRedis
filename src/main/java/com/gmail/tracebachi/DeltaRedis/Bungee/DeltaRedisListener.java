@@ -43,8 +43,7 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
     private HashSet<String> onlinePlayers = new HashSet<>(64);
     private DeltaRedis plugin;
 
-    public DeltaRedisListener(StatefulRedisConnection<String, String> connection,
-        DeltaRedis plugin)
+    public DeltaRedisListener(StatefulRedisConnection<String, String> connection, DeltaRedis plugin)
     {
         this.connection = connection;
         this.plugin = plugin;
@@ -96,7 +95,7 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
      * a connection to a server is fully operational, and is about to hand over
      * control of the session to the player. It is useful if you wish to send
      * information to the server before the player logs in.
-     *
+     * <p>
      * (Doc Source: https://github.com/SpigotMC/BungeeCord/blob/master/api/src/
      * main/java/net/md_5/bungee/api/event/ServerConnectedEvent.java
      */
@@ -114,7 +113,7 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
     /**
      * Called when a player has left the proxy, it is not safe to call any methods
      * that perform an action on the passed player instance.
-     *
+     * <p>
      * (Doc Source: https://github.com/SpigotMC/BungeeCord/blob/master/api/src/
      * main/java/net/md_5/bungee/api/event/ServerConnectEvent.java)
      */
@@ -158,9 +157,9 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
      *
      * @param playerName Name of the player to add.
      * @param serverName Server of the player.
-     * @param ip IP address of the player.
+     * @param ip         IP address of the player.
      */
-    public void setPlayerAsOnline(String playerName, String serverName, String ip)
+    void setPlayerAsOnline(String playerName, String serverName, String ip)
     {
         Preconditions.checkNotNull(playerName, "PlayerName cannot be null.");
         Preconditions.checkNotNull(serverName, "ServerName cannot be null.");
@@ -186,7 +185,7 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
      *
      * @param playerName Name of the player to remove.
      */
-    public void setPlayerAsOffline(String playerName)
+    void setPlayerAsOffline(String playerName)
     {
         Preconditions.checkNotNull(playerName, "PlayerName cannot be null.");
 

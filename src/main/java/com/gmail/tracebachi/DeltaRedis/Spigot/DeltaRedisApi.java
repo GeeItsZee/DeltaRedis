@@ -118,7 +118,6 @@ public class DeltaRedisApi
 
     /**
      * @param partial Non-null string that is the beginning of a name
-     *
      * @return A list of player names that begins with the partial
      * sent to this method.
      */
@@ -142,7 +141,6 @@ public class DeltaRedisApi
 
     /**
      * @param partial Non-null string that is the beginning of a name
-     *
      * @return A list of player names that begins with the partial
      * sent to this method.
      */
@@ -169,7 +167,7 @@ public class DeltaRedisApi
      * with the {@link CachedPlayer} or null.
      *
      * @param playerName Name of the player to find.
-     * @param callback Callback to run when fetch is complete.
+     * @param callback   Callback to run when fetch is complete.
      */
     public void findPlayer(String playerName, CachedPlayerCallback callback)
     {
@@ -180,8 +178,8 @@ public class DeltaRedisApi
      * Asynchronously looks for the player in Redis. The callback is called
      * with the {@link CachedPlayer} or null.
      *
-     * @param playerName Name of the player to find.
-     * @param callback Callback to run when fetch is complete.
+     * @param playerName   Name of the player to find.
+     * @param callback     Callback to run when fetch is complete.
      * @param syncCallback Set to true to run callback sync else it will run async.
      */
     public void findPlayer(String playerName, CachedPlayerCallback callback, boolean syncCallback)
@@ -195,9 +193,7 @@ public class DeltaRedisApi
 
             if(syncCallback)
             {
-                Bukkit.getScheduler().runTask(
-                    plugin,
-                    () -> callback.call(cachedPlayer));
+                Bukkit.getScheduler().runTask(plugin, () -> callback.call(cachedPlayer));
             }
             else
             {
@@ -210,8 +206,8 @@ public class DeltaRedisApi
      * Publishes a message built from string message pieces joined by
      * the "/\" (forward-slash, back-slash) to Redis.
      *
-     * @param destination Server to send message to.
-     * @param channel Channel of the message.
+     * @param destination   Server to send message to.
+     * @param channel       Channel of the message.
      * @param messagePieces The parts of the message.
      */
     public void publish(String destination, String channel, String... messagePieces)
@@ -225,8 +221,8 @@ public class DeltaRedisApi
      * Publishes a message to Redis.
      *
      * @param destServer Server to send message to.
-     * @param channel Channel of the message.
-     * @param message The actual message.
+     * @param channel    Channel of the message.
+     * @param message    The actual message.
      */
     public void publish(String destServer, String channel, String message)
     {
@@ -252,7 +248,7 @@ public class DeltaRedisApi
      * Sends a command that will run as OP by the receiving server.
      *
      * @param destServer Destination server name.
-     * @param command Command to send.
+     * @param command    Command to send.
      */
     public void sendCommandToServer(String destServer, String command)
     {
@@ -263,8 +259,8 @@ public class DeltaRedisApi
      * Sends a command that will run as OP by the receiving server.
      *
      * @param destServer Destination server name.
-     * @param command Command to send.
-     * @param sender Name to record in the logs as having run the command.
+     * @param command    Command to send.
+     * @param sender     Name to record in the logs as having run the command.
      */
     public void sendCommandToServer(String destServer, String command, String sender)
     {
@@ -292,7 +288,7 @@ public class DeltaRedisApi
      * to players that are on the same server.
      *
      * @param playerName Name of the player to try and send a message to.
-     * @param message Message to send.
+     * @param message    Message to send.
      */
     public void sendMessageToPlayer(String playerName, String message)
     {
@@ -319,7 +315,7 @@ public class DeltaRedisApi
      * {@link Servers#SPIGOT} is used, the announcement will also be performed
      * on the current server.
      *
-     * @param destServer Destination server name or {@link Servers#SPIGOT}.
+     * @param destServer   Destination server name or {@link Servers#SPIGOT}.
      * @param announcement Announcement to send.
      */
     public void sendAnnouncementToServer(String destServer, String announcement)
@@ -332,11 +328,11 @@ public class DeltaRedisApi
      * {@link Servers#SPIGOT} is used, the announcement will also be performed
      * on the current server.
      *
-     * @param destServer Destination server name or {@link Servers#SPIGOT}.
+     * @param destServer   Destination server name or {@link Servers#SPIGOT}.
      * @param announcement Announcement to send.
-     * @param permission Permission that a player must have to receive the
-     *                   announcement. The empty string, "", can be used to
-     *                   signal that a permission is not required.
+     * @param permission   Permission that a player must have to receive the
+     *                     announcement. The empty string, "", can be used to
+     *                     signal that a permission is not required.
      */
     public void sendAnnouncementToServer(String destServer, String announcement, String permission)
     {
