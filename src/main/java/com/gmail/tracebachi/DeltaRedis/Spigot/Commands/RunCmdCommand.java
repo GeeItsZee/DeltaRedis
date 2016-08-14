@@ -16,25 +16,32 @@
  */
 package com.gmail.tracebachi.DeltaRedis.Spigot.Commands;
 
+import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisChannels;
 import com.gmail.tracebachi.DeltaRedis.Shared.Registerable;
 import com.gmail.tracebachi.DeltaRedis.Shared.Servers;
 import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedis;
 import com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedisApi;
+import com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedisMessageEvent;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 import static com.gmail.tracebachi.DeltaRedis.Shared.Prefixes.*;
+import static com.gmail.tracebachi.DeltaRedis.Shared.SplitPatterns.DELTA;
 
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 11/28/15.
  */
-public class RunCmdCommand implements CommandExecutor, Registerable, Shutdownable
+public class RunCmdCommand implements CommandExecutor, Listener, Registerable, Shutdownable
 {
     private DeltaRedis plugin;
 
@@ -47,12 +54,15 @@ public class RunCmdCommand implements CommandExecutor, Registerable, Shutdownabl
     public void register()
     {
         plugin.getCommand("runcmd").setExecutor(this);
+        plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
     @Override
     public void unregister()
     {
         plugin.getCommand("runcmd").setExecutor(null);
+
+        HandlerList.unregisterAll(this);
     }
 
     @Override
@@ -124,6 +134,26 @@ public class RunCmdCommand implements CommandExecutor, Registerable, Shutdownabl
         }
 
         return true;
+    }
+
+    @EventHandler
+    public void onDeltaRedisMessage(DeltaRedisMessageEvent event)
+    {
+        String channel = event.getChannel();
+        String eventMessage = event.getMessage();
+
+        if(channel.equals(DeltaRedisChannels.RUN_CMD))
+        {
+            String[] splitMessage = DELTA.split(eventMessage, 2);
+            String sender = splitMessage[0];
+            String command = splitMessage[1];
+
+            plugin.info("[RunCmd] {SendingServer: " + event.getSendingServer() +
+                " , Sender: " + sender +
+                " , Command: /" + command + "}");
+
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+        }
     }
 
     private String joinArgsForCommand(String[] args)

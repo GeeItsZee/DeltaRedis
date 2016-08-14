@@ -65,19 +65,7 @@ public class DeltaRedisListener implements Listener, Registerable, Shutdownable
         String channel = event.getChannel();
         String eventMessage = event.getMessage();
 
-        if(channel.equals(DeltaRedisChannels.RUN_CMD))
-        {
-            String[] splitMessage = DELTA.split(eventMessage, 2);
-            String sender = splitMessage[0];
-            String command = splitMessage[1];
-
-            plugin.info("[RunCmd] {SendingServer: " + event.getSendingServer() +
-                " , Sender: " + sender +
-                " , Command: /" + command + "}");
-
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), eventMessage);
-        }
-        else if(channel.equals(DeltaRedisChannels.SEND_ANNOUNCEMENT))
+        if(channel.equals(DeltaRedisChannels.SEND_ANNOUNCEMENT))
         {
             String[] splitMessage = DELTA.split(eventMessage, 2);
             String permission = splitMessage[0];
