@@ -21,19 +21,19 @@ package com.gmail.tracebachi.DeltaRedis.Shared.Cache;
  */
 public class CachedPlayer implements Cacheable
 {
-    private final String server;
     private final String ip;
+    private final String server;
     private final long timeCreatedAt;
 
-    public CachedPlayer(String server, String ip)
+    public CachedPlayer(String ip, String server)
     {
-        this.server = server;
         this.ip = ip;
+        this.server = server;
         this.timeCreatedAt = System.currentTimeMillis();
     }
 
     /**
-     * @return Time in milliseconds when this {@link CachedPlayer} was created.
+     * @return Time in milliseconds when this {@link CachedPlayer} was created
      */
     @Override
     public long getTimeCreatedAt()
@@ -42,22 +42,18 @@ public class CachedPlayer implements Cacheable
     }
 
     /**
-     * It is possible that the player has disconnected from BungeeCord or
-     * switched servers. Developers should handle that case if they plan
-     * to send any messages to the server in regards to the player.
-     *
-     * @return The last known server the player was on is returned.
-     */
-    public String getServer()
-    {
-        return server;
-    }
-
-    /**
-     * @return IP address of the player as stored on BungeeCord.
+     * @return IP address of the player recorded by BungeeCord
      */
     public String getIp()
     {
         return ip;
+    }
+
+    /**
+     * @return The last known server the player was on
+     */
+    public String getServer()
+    {
+        return server;
     }
 }

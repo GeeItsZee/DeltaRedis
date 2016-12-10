@@ -16,8 +16,8 @@
  */
 package com.gmail.tracebachi.DeltaRedis.Spigot.Commands;
 
-import com.gmail.tracebachi.DeltaRedis.Shared.Registerable;
-import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
+import com.gmail.tracebachi.DeltaRedis.Shared.Interfaces.Registerable;
+import com.gmail.tracebachi.DeltaRedis.Shared.Interfaces.Shutdownable;
 import com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedis;
 import com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedisApi;
 import org.bukkit.Bukkit;
@@ -26,7 +26,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import static com.gmail.tracebachi.DeltaRedis.Shared.Prefixes.*;
+import static com.gmail.tracebachi.DeltaRedis.Shared.ChatMessageHelper.format;
 
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 11/28/15.
@@ -64,13 +64,17 @@ public class IsOnlineCommand implements CommandExecutor, Registerable, Shutdowna
     {
         if(!sender.hasPermission("DeltaRedis.IsOnline"))
         {
-            sender.sendMessage(FAILURE + "You do not have permission to run this command.");
+            sender.sendMessage(format(
+                "NoPerm",
+                "DeltaRedis.IsOnline"));
             return true;
         }
 
         if(args.length < 1)
         {
-            sender.sendMessage(INFO + "/isonline <name>");
+            sender.sendMessage(format(
+                "Usage",
+                "/isonline <name>"));
             return true;
         }
 
@@ -81,13 +85,16 @@ public class IsOnlineCommand implements CommandExecutor, Registerable, Shutdowna
         {
             if(cachedPlayer != null)
             {
-                sendMessage(senderName, INFO + input(nameToFind) +
-                    " is " + input("online") +
-                    " on " + input(cachedPlayer.getServer()));
+                sendMessage(senderName, format(
+                    "DeltaRedis.PlayerOnlineOnServer",
+                    nameToFind,
+                    cachedPlayer.getServer()));
             }
             else
             {
-                sendMessage(senderName, INFO + input(nameToFind) + " is " + input("offline"));
+                sendMessage(senderName, format(
+                    "PlayerOffline",
+                    nameToFind));
             }
         });
 

@@ -1,11 +1,12 @@
+###############################################################################
 # DeltaRedis Configuration File
+###############################################################################
 
 # Login and connection information for the Redis server
 RedisServer:
   URL: localhost
   Port: 6379
-  HasPassword: False
-  Password: DeltaRedis_Is_Great!
+  Password: null
 
 # Name        | Type
 # ------------------------
@@ -26,5 +27,19 @@ ServerNameInBungeeCord: World
 # Time in ticks for every online server and online player update
 OnlineUpdatePeriod: 300
 
+# Formatting Strings
+Formats:
+
+  NoPerm: "[FAILURE] You do not have the {0} permission."
+  Usage: "[USAGE] {0}"
+  PlayerOffline: "[FAILURE] Player {0} is offline"
+  PlayerOnlyCommand: "[FAILURE] Only in-game players can use {0}"
+
+  PlayerOnlineOnServer: "[SUCCESS] Player {0} is online on {1}"
+  CommandSent: "[SUCCESS] Command sent to {0}"
+  ServerNotFound: "[FAILURE] Server {0} is not online or does not exist"
+  BungeeNotAvailable: "[FAILURE] Bungee is not online"
+  DebugCategoryChange: "[SUCCESS} Debug category {0} has been set to {1}"
+
 # Used for debugging DeltaRedis
-DebugMode: True
+Debug: True

@@ -16,51 +16,63 @@
  */
 package com.gmail.tracebachi.DeltaRedis.Shared;
 
+import java.util.List;
+
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 11/27/15.
  */
 public interface DeltaRedisInterface
 {
     /**
-     * Handles a DeltaRedis message to the server.
+     * Handles a DeltaRedis message sent to the server
      *
-     * @param source  Server that sent the message.
-     * @param channel Custom channel that the message should be delivered to.
-     * @param message Message to deliver.
+     * @param publishedMessageParts Complete message (as parts) being received
+     * <p>
+     * This message parts include the sending server an channel
+     * as the first 2 elements.
+     * </p>
      */
-    void onRedisMessageEvent(String source, String channel, String message);
+    void onRedisMessageEvent(List<String> publishedMessageParts);
 
     /**
-     * @return Name of the BungeeCord instance to which the server belongs.
-     * This value is set in the configuration file for each server.
+     * Handles a DeltaRedis message sent to the server
+     *
+     * @param server Server the message is coming from
+     * @param channel Channel the message is going to
+     * @param messageParts Channel message (in parts) being received
+     */
+    void onRedisMessageEvent(String server, String channel, List<String> messageParts);
+
+    /**
+     * @return Name of the BungeeCord instance to which the server belongs
+     * <p>This value is set in the configuration file for each server.</p>
      */
     String getBungeeName();
 
     /**
-     * @return Name of the server. If the server is a BungeeCord instance, the
-     * server name will be {@link Servers#BUNGEECORD}. This value is set in
-     * the configuration file for each server.
+     * @return {@link Servers#BUNGEECORD} or the name of the Spigot server
+     * <p>This value is set in the configuration file for each server.</p>
      */
     String getServerName();
 
     /**
-     * Logs the message as INFO.
+     * Logs the message as INFO
      *
-     * @param message Message to log.
+     * @param message Message to log
      */
     void info(String message);
 
     /**
-     * Logs the message as SEVERE.
+     * Logs the message as SEVERE
      *
-     * @param message Message to log.
+     * @param message Message to log
      */
     void severe(String message);
 
     /**
-     * Logs the message as DEBUG if debug is enabled.
+     * Logs the message as DEBUG if debug is enabled
      *
-     * @param message Message to log.
+     * @param message Message to log
      */
     void debug(String message);
 }

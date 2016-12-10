@@ -17,18 +17,19 @@
 package com.gmail.tracebachi.DeltaRedis.Spigot;
 
 import com.gmail.tracebachi.DeltaRedis.Shared.Cache.CachedPlayer;
+import com.gmail.tracebachi.DeltaRedis.Shared.Interfaces.Callback;
 
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 12/11/15.
  */
 @FunctionalInterface
-public interface CachedPlayerCallback
+public interface CachedPlayerCallback extends Callback<CachedPlayer>
 {
     /**
-     * Method to call synchronously on the server after the player is queried
-     * on Redis. The parameter is null if no player was found.
+     * Method to call after the player is queried on Redis
+     * <p>The parameter is null if no player was found.</p>
      *
-     * @param player CachedPlayer found by DeltaRedis.
+     * @param player CachedPlayer found by DeltaRedis or null
      */
     void call(CachedPlayer player);
 }

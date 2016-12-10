@@ -16,10 +16,15 @@
  */
 package com.gmail.tracebachi.DeltaRedis.Bungee;
 
-import com.gmail.tracebachi.DeltaRedis.Bungee.Commands.RunCmdBungeeCommand;
+import com.gmail.tracebachi.DeltaRedis.Bungee.Commands.DebugCategoryCommand;
+import com.gmail.tracebachi.DeltaRedis.Bungee.Commands.RunCmdCommand;
+import com.gmail.tracebachi.DeltaRedis.Bungee.Events.DeltaRedisMessageEvent;
+import com.gmail.tracebachi.DeltaRedis.Bungee.Listeners.ProxiedPlayerListener;
+import com.gmail.tracebachi.DeltaRedis.Bungee.Utils.ConfigUtil;
+import com.gmail.tracebachi.DeltaRedis.Shared.ChatMessageHelper;
 import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisInterface;
-import com.gmail.tracebachi.DeltaRedis.Shared.Redis.DRCommandSender;
-import com.gmail.tracebachi.DeltaRedis.Shared.Redis.DRPubSubListener;
+import com.gmail.tracebachi.DeltaRedis.Shared.Redis.DeltaRedisCommandSender;
+import com.gmail.tracebachi.DeltaRedis.Shared.Redis.DeltaRedisPubSubListener;
 import com.gmail.tracebachi.DeltaRedis.Shared.Servers;
 import com.google.common.base.Preconditions;
 import com.lambdaworks.redis.ClientOptions;
@@ -29,6 +34,7 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 import com.lambdaworks.redis.resource.ClientResources;
 import com.lambdaworks.redis.resource.DefaultClientResources;
+import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
@@ -37,6 +43,8 @@ import net.md_5.bungee.config.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -46,23 +54,24 @@ import java.util.concurrent.TimeUnit;
 public class DeltaRedis extends Plugin implements DeltaRedisInterface
 {
     private boolean debugEnabled;
-    private Configuration config;
+    private String bungeeName;
+    private DeltaRedisCommandSender commandSender;
+    private DeltaRedisPubSubListener pubSubListener;
+    private ProxiedPlayerListener proxiedPlayerListener;
+    private RunCmdCommand runCmdCommand;
+    private DebugCategoryCommand debugCategoryCommand;
+
     private ClientResources resources;
     private RedisClient client;
-    private DRPubSubListener pubSubListener;
-    private DRCommandSender commandSender;
     private StatefulRedisPubSubConnection<String, String> pubSubConn;
     private StatefulRedisConnection<String, String> commandConn;
-
-    private DeltaRedisListener mainListener;
-    private RunCmdBungeeCommand runCmdBungeeCommand;
-    private DeltaRedisApi deltaRedisApi;
 
     @Override
     public void onEnable()
     {
         info("-----------------------------------------------------------------");
-        info("[IMPORTANT] Please verify that all Spigot servers are configured with their correct cased name.");
+        info("[IMPORTANT] Please verify that all Spigot servers are configured");
+        info("[IMPORTANT] with their correct cased name. For example: ");
         info("[IMPORTANT] \'World\' is not the same as \'world\'");
         for(Map.Entry<String, ServerInfo> entry : getProxy().getServers().entrySet())
         {
@@ -70,41 +79,20 @@ public class DeltaRedis extends Plugin implements DeltaRedisInterface
         }
         info("-----------------------------------------------------------------");
 
-        reloadConfig();
-        if(config == null) { return; }
-        debugEnabled = config.getBoolean("DebugMode", false);
+        Configuration configuration = loadConfig();
+        readConfig(configuration);
+        setupRedis(configuration);
 
-        Preconditions.checkArgument(
-            config.get("BungeeName") != null,
-            "BungeeName not specified.");
+        debugCategoryCommand = new DebugCategoryCommand(this);
+        debugCategoryCommand.register();
 
-        ClientOptions.Builder optionBuilder = new ClientOptions.Builder();
-        optionBuilder.autoReconnect(true);
+        runCmdCommand = new RunCmdCommand(this);
+        runCmdCommand.register();
 
-        resources = new DefaultClientResources.Builder()
-            .ioThreadPoolSize(4)
-            .computationThreadPoolSize(4)
-            .build();
+        proxiedPlayerListener = new ProxiedPlayerListener(commandSender, this);
+        proxiedPlayerListener.register();
 
-        client = RedisClient.create(resources, getRedisUri(config));
-        client.setOptions(optionBuilder.build());
-        pubSubConn = client.connectPubSub();
-        commandConn = client.connect();
-
-        pubSubListener = new DRPubSubListener(this);
-        pubSubConn.addListener(pubSubListener);
-        pubSubConn.sync().subscribe(getBungeeName() + ':' + Servers.BUNGEECORD);
-
-        commandSender = new DRCommandSender(commandConn, this);
-        commandSender.setup();
-
-        deltaRedisApi = new DeltaRedisApi(commandSender, this);
-
-        mainListener = new DeltaRedisListener(commandConn, this);
-        mainListener.register();
-
-        runCmdBungeeCommand = new RunCmdBungeeCommand(this);
-        runCmdBungeeCommand.register();
+        DeltaRedisApi.setup(commandSender, this);
 
         getProxy().getScheduler().schedule(this, () ->
         {
@@ -119,14 +107,18 @@ public class DeltaRedis extends Plugin implements DeltaRedisInterface
     @Override
     public void onDisable()
     {
-        runCmdBungeeCommand.shutdown();
-        runCmdBungeeCommand = null;
+        getProxy().getScheduler().cancel(this);
 
-        mainListener.shutdown();
-        mainListener = null;
+        DeltaRedisApi.shutdown();
 
-        deltaRedisApi.shutdown();
-        deltaRedisApi = null;
+        proxiedPlayerListener.shutdown();
+        proxiedPlayerListener = null;
+
+        runCmdCommand.shutdown();
+        runCmdCommand = null;
+
+        debugCategoryCommand.shutdown();
+        debugCategoryCommand = null;
 
         commandSender.shutdown();
         commandSender = null;
@@ -134,7 +126,6 @@ public class DeltaRedis extends Plugin implements DeltaRedisInterface
         commandConn.close();
         commandConn = null;
 
-        pubSubConn.removeListener(pubSubListener);
         pubSubConn.close();
         pubSubConn = null;
 
@@ -146,14 +137,46 @@ public class DeltaRedis extends Plugin implements DeltaRedisInterface
 
         resources.shutdown();
         resources = null;
+    }
 
-        debugEnabled = false;
+    public void setDebugEnabled(boolean debugEnabled)
+    {
+        this.debugEnabled = debugEnabled;
     }
 
     @Override
-    public void onRedisMessageEvent(String source, String channel, String message)
+    public void onRedisMessageEvent(List<String> allMessageParts)
     {
-        DeltaRedisMessageEvent event = new DeltaRedisMessageEvent(source, channel, message);
+        Preconditions.checkNotNull(allMessageParts, "allMessageParts");
+        Preconditions.checkArgument(
+            allMessageParts.size() >= 2,
+            "Less than expected number of parts in message");
+
+        String sendingServer = allMessageParts.get(0);
+        String channel = allMessageParts.get(1);
+        List<String> eventMessageParts = new ArrayList<>(allMessageParts.size() - 2);
+
+        for(int i = 2; i < allMessageParts.size(); i++)
+        {
+            eventMessageParts.add(allMessageParts.get(i));
+        }
+
+        onRedisMessageEvent(sendingServer, channel, eventMessageParts);
+    }
+
+    @Override
+    public void onRedisMessageEvent(String sendingServer,
+                                    String channel,
+                                    List<String> messageParts)
+    {
+        Preconditions.checkNotNull(sendingServer, "sendingServer");
+        Preconditions.checkNotNull(channel, "channel");
+        Preconditions.checkNotNull(messageParts, "messageParts");
+
+        DeltaRedisMessageEvent event = new DeltaRedisMessageEvent(
+            sendingServer,
+            channel,
+            messageParts);
 
         getProxy().getPluginManager().callEvent(event);
     }
@@ -161,7 +184,7 @@ public class DeltaRedis extends Plugin implements DeltaRedisInterface
     @Override
     public String getBungeeName()
     {
-        return config.getString("BungeeName");
+        return bungeeName;
     }
 
     @Override
@@ -191,44 +214,94 @@ public class DeltaRedis extends Plugin implements DeltaRedisInterface
         }
     }
 
-    private void reloadConfig()
+    private Configuration loadConfig()
     {
         try
         {
-            File file = ConfigUtil.saveResource(this, "bungee-config.yml", "config.yml");
-            config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(file);
+            File file = ConfigUtil.saveResource(
+                this,
+                "bungee-config.yml",
+                "config.yml");
+            Configuration config = ConfigurationProvider
+                .getProvider(YamlConfiguration.class)
+                .load(file);
 
-            if(config == null)
-            {
-                ConfigUtil.saveResource(this, "bungee-config.yml", "config-example.yml", true);
-                getLogger().severe("Invalid configuration file! An example configuration" +
-                    " has been saved to the DeltaRedis folder.");
-            }
+            if(config != null) { return config; }
+
+            ConfigUtil.saveResource(
+                this,
+                "bungee-config.yml",
+                "config-example.yml",
+                true);
+
+            throw new RuntimeException("Failed to load configuration file");
         }
         catch(IOException e)
         {
-            getLogger().severe("Failed to load configuration file.");
-            e.printStackTrace();
+            throw new RuntimeException("Failed to load configuration file", e);
         }
     }
 
-    private RedisURI getRedisUri(Configuration config)
+    private void readConfig(Configuration configuration)
     {
-        String redisUrl = config.getString("RedisServer.URL");
-        String redisPort = config.getString("RedisServer.Port");
-        String redisPass = config.getString("RedisServer.Password");
-        boolean hasPassword = config.getBoolean("RedisServer.HasPassword");
+        Preconditions.checkNotNull(configuration, "configuration");
 
-        Preconditions.checkNotNull(redisUrl, "Redis URL cannot be null.");
-        Preconditions.checkNotNull(redisPort, "Redis Port cannot be null.");
+        debugEnabled = configuration.getBoolean("Debug", false);
+        bungeeName = configuration.getString("BungeeName");
 
-        if(hasPassword)
+        Preconditions.checkNotNull(bungeeName, "bungeeName");
+
+        Configuration formatsSection = configuration.getSection("Formats");
+        for(String key : formatsSection.getKeys())
         {
-            return RedisURI.create("redis://" + redisPass + '@' + redisUrl + ':' + redisPort);
+            String value = formatsSection.getString(key);
+            if(value != null)
+            {
+                String translatedFormat = ChatColor
+                    .translateAlternateColorCodes('&', value);
+                ChatMessageHelper.instance().updateFormat("DeltaRedis." + key, translatedFormat);
+            }
+        }
+    }
+
+    private String getRedisUri(Configuration config)
+    {
+        String url = config.getString("RedisServer.URL");
+        String port = config.getString("RedisServer.Port");
+        String password = config.getString("RedisServer.Password");
+
+        Preconditions.checkNotNull(url, "RedisServer.URL");
+        Preconditions.checkNotNull(port, "RedisServer.Port");
+
+        if(password != null)
+        {
+            return "redis://" + password + '@' + url + ':' + port;
         }
         else
         {
-            return RedisURI.create("redis://" + redisUrl + ':' + redisPort);
+            return "redis://" + url + ':' + port;
         }
+    }
+
+    private void setupRedis(Configuration configuration)
+    {
+        resources = new DefaultClientResources
+            .Builder()
+            .ioThreadPoolSize(3)
+            .computationThreadPoolSize(3)
+            .build();
+
+        client = RedisClient.create(resources, RedisURI.create(getRedisUri(configuration)));
+        client.setOptions(new ClientOptions.Builder().autoReconnect(true).build());
+
+        pubSubConn = client.connectPubSub();
+        commandConn = client.connect();
+
+        pubSubListener = new DeltaRedisPubSubListener(this);
+        pubSubConn.addListener(pubSubListener);
+        pubSubConn.sync().subscribe(getBungeeName() + ':' + Servers.BUNGEECORD);
+
+        commandSender = new DeltaRedisCommandSender(commandConn, this);
+        commandSender.setup();
     }
 }

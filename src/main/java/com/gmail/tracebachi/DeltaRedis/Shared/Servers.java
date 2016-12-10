@@ -22,12 +22,12 @@ package com.gmail.tracebachi.DeltaRedis.Shared;
 public interface Servers
 {
     /**
-     * Channel name for all Spigot servers.
+     * Channel name for all Spigot servers
      */
     String SPIGOT = "SPIGOT";
 
     /**
-     * Channel name for the BungeeCord instance.
+     * Channel name for the BungeeCord instance
      */
     String BUNGEECORD = "BUNGEECORD";
 }

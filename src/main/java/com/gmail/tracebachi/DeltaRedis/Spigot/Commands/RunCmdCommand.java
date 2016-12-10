@@ -17,12 +17,12 @@
 package com.gmail.tracebachi.DeltaRedis.Spigot.Commands;
 
 import com.gmail.tracebachi.DeltaRedis.Shared.DeltaRedisChannels;
-import com.gmail.tracebachi.DeltaRedis.Shared.Registerable;
+import com.gmail.tracebachi.DeltaRedis.Shared.Interfaces.Registerable;
+import com.gmail.tracebachi.DeltaRedis.Shared.Interfaces.Shutdownable;
 import com.gmail.tracebachi.DeltaRedis.Shared.Servers;
-import com.gmail.tracebachi.DeltaRedis.Shared.Shutdownable;
 import com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedis;
 import com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedisApi;
-import com.gmail.tracebachi.DeltaRedis.Spigot.DeltaRedisMessageEvent;
+import com.gmail.tracebachi.DeltaRedis.Spigot.Events.DeltaRedisMessageEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -33,10 +33,10 @@ import org.bukkit.event.Listener;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-import static com.gmail.tracebachi.DeltaRedis.Shared.Prefixes.*;
-import static com.gmail.tracebachi.DeltaRedis.Shared.SplitPatterns.DELTA;
+import static com.gmail.tracebachi.DeltaRedis.Shared.ChatMessageHelper.format;
 
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 11/28/15.
@@ -77,15 +77,20 @@ public class RunCmdCommand implements CommandExecutor, Listener, Registerable, S
     {
         if(!sender.hasPermission("DeltaRedis.RunCmd"))
         {
-            sender.sendMessage(FAILURE + "You do not have permission to run this command.");
+            sender.sendMessage(format(
+                "NoPerm",
+                "DeltaRedis.RunCmd"));
             return true;
         }
 
         if(args.length <= 1)
         {
-            sender.sendMessage(INFO + "/runcmd server[,server,...] command");
-            sender.sendMessage(INFO + "/runcmd ALL command");
-            sender.sendMessage(INFO + "/runcmd BUNGEE command");
+            sender.sendMessage(format(
+                "Usage",
+                "/runcmd server[,server,...] command"));
+            sender.sendMessage(format(
+                "Usage",
+                "/runcmd ALL command"));
             return true;
         }
 
@@ -99,20 +104,24 @@ public class RunCmdCommand implements CommandExecutor, Listener, Registerable, S
         {
             if(deltaApi.isBungeeCordOnline())
             {
-                deltaApi.sendCommandToServer(Servers.BUNGEECORD, commandStr, senderName);
+                deltaApi.sendServerCommand(Servers.BUNGEECORD, commandStr, senderName);
 
-                sender.sendMessage(SUCCESS + "Sent command to " + input("BUNGEE"));
+                sender.sendMessage(format(
+                    "DeltaRedis.CommandSent",
+                    "BUNGEE"));
             }
             else
             {
-                sender.sendMessage(FAILURE + "BungeeCord is currently down.");
+                sender.sendMessage(format("DeltaRedis.BungeeNotAvailable"));
             }
         }
         else if(doesSetContain(argServers, "ALL"))
         {
-            deltaApi.sendCommandToServer(Servers.SPIGOT, commandStr, senderName);
+            deltaApi.sendServerCommand(Servers.SPIGOT, commandStr, senderName);
 
-            sender.sendMessage(SUCCESS + "Sent command to " + input("ALL"));
+            sender.sendMessage(format(
+                "DeltaRedis.CommandSent",
+                "ALL"));
         }
         else
         {
@@ -122,13 +131,17 @@ public class RunCmdCommand implements CommandExecutor, Listener, Registerable, S
 
                 if(correctedDest != null)
                 {
-                    deltaApi.sendCommandToServer(correctedDest, commandStr, senderName);
+                    deltaApi.sendServerCommand(correctedDest, commandStr, senderName);
 
-                    sender.sendMessage(SUCCESS + "Sent command to " + input(dest));
+                    sender.sendMessage(format(
+                        "DeltaRedis.CommandSent",
+                        dest));
                 }
                 else
                 {
-                    sender.sendMessage(FAILURE + input(dest) + " is offline or non-existent.");
+                    sender.sendMessage(format(
+                        "DeltaRedis.ServerNotFound",
+                        dest));
                 }
             }
         }
@@ -140,19 +153,18 @@ public class RunCmdCommand implements CommandExecutor, Listener, Registerable, S
     public void onDeltaRedisMessage(DeltaRedisMessageEvent event)
     {
         String channel = event.getChannel();
-        String eventMessage = event.getMessage();
+        List<String> messageParts = event.getMessageParts();
 
         if(channel.equals(DeltaRedisChannels.RUN_CMD))
         {
-            String[] splitMessage = DELTA.split(eventMessage, 2);
-            String sender = splitMessage[0];
-            String command = splitMessage[1];
+            String sender = messageParts.get(0);
+            String command = messageParts.get(1);
 
-            plugin.info("[RunCmd] {SendingServer: " + event.getSendingServer() +
-                " , Sender: " + sender +
-                " , Command: /" + command + "}");
+            plugin.info("[RunCmd] sendingServer: " + event.getSendingServer() +
+                ", sender: " + sender +
+                ", command: /" + command);
 
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+            plugin.getServer().dispatchCommand(Bukkit.getConsoleSender(), command);
         }
     }
 

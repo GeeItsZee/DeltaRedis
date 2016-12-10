@@ -17,7 +17,5 @@ permissions:
     description: Permission to use /deltaredisdebug
   DeltaRedis.IsOnline:
     description: Permission to use /isonline
-  DeltaRedis.ListAll:
-    description: Permission to use /listall
   DeltaRedis.RunCmd:
     description: Permission to use /runcmd
