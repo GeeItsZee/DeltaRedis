@@ -169,7 +169,9 @@ public class DeltaRedisApi
 
             if(syncCallback)
             {
-                Bukkit.getScheduler().runTask(plugin, () -> callback.call(cachedPlayer));
+                Bukkit.getScheduler().runTask(
+                    plugin,
+                    () -> callback.call(cachedPlayer));
             }
             else
             {
@@ -205,7 +207,9 @@ public class DeltaRedisApi
 
         if(plugin.getServerName().equals(destination))
         {
-            plugin.onRedisMessageEvent(destination, channel, messageParts);
+            Bukkit.getScheduler().runTask(
+                plugin,
+                () -> plugin.onRedisMessageEvent(destination, channel, messageParts));
             return;
         }
 
@@ -230,7 +234,9 @@ public class DeltaRedisApi
 
         if(plugin.getServerName().equals(destServer))
         {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+            Bukkit.getScheduler().runTask(
+                plugin,
+                () -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command));
             return;
         }
 
